@@ -1,0 +1,17 @@
+documents:
+  - key: sea-course-list
+    title: "IDA/SEA Course List - CUHK 2025-26"
+    url: "https://www.cdmp.cuhk.edu.hk/documents/IDA_SEA-Course%20list_CUHK_2025-26.pdf"
+    tags:
+      - ida
+      - sea
+      - course-list
+      - "2025-26"
+
+  - key: u-core-cuhk-cuhksz
+    title: "University Core between CUHK and CUHK(SZ) - cohorts 2024-25 to 2026-27"
+    url: "https://www.cdmp.cuhk.edu.hk/documents/U%20core%20between%20CUHK%20&%20CUHKSZ_cohort%202024_25.pdf"
+    tags:
+      - university-core
+      - cuhksz
+      - "2024-25"
