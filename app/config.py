@@ -13,7 +13,7 @@ import yaml
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
 APP_VERSION = "0.1.0"
 DEFAULT_USER_AGENT = (
-    "CUHK-CDMP-PDF-Monitor/0.1 "
+    "IDADM-Official-Doc-Monitor/0.1 "
     "(low-frequency polling of public PDFs; contact: admin@example.com)"
 )
 

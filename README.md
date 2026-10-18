@@ -1,4 +1,4 @@
-# CUHK CDMP PDF 变更监控与查询 API
+# CUHK IDADM 官方文件变更监控与查询 API
 
 > [!note]
 >
@@ -10,6 +10,8 @@
 - `u-core-cuhk-cuhksz` — [University Core between CUHK and CUHK(SZ), cohorts 2024-25 to 2026-27](https://www.cdmp.cuhk.edu.hk/documents/U%20core%20between%20CUHK%20&%20CUHKSZ_cohort%202024_25.pdf)
 
 变更结果写入 SQLite，并通过 FastAPI 暴露状态、变更列表、变更详情、Markdown 报告和纯文本 unified diff。项目目录独立，不依赖同级其他项目。
+
+后续开发约束、测试规则和完成标准见 [AGENTS.md](AGENTS.md)。
 
 ## 1. 可行性评估
 
@@ -152,7 +154,7 @@
 ## 4. 项目结构
 
 ```text
-cdmp-pdf-monitor/
+IDADM-Official-Doc-Monitor/
 ├── app/
 │   ├── api.py           # FastAPI 工厂、鉴权、路由
 │   ├── cli.py           # init-db / check / status / changes / show-change
@@ -165,9 +167,11 @@ cdmp-pdf-monitor/
 │   ├── monitor.py       # 核心检查流程、快照、版本和变更落库
 │   ├── presenters.py    # DB row → API 响应
 │   ├── scheduler.py     # APScheduler
-│   └── schemas.py       # Pydantic 响应模型
+│   ├── schemas.py       # Pydantic 响应模型
+│   └── timeutil.py      # UTC 时间工具
 ├── config/documents.yaml
 ├── tests/
+├── AGENTS.md            # 后续 vibe-coding 与维护约束
 ├── requirements.txt
 ├── Dockerfile
 ├── docker-compose.yml
@@ -190,7 +194,7 @@ data/
 要求 Python 3.13+。Windows PowerShell / Git Bash 均可。
 
 ```bash
-cd cdmp-pdf-monitor
+cd IDADM-Official-Doc-Monitor
 
 # 创建虚拟环境（Windows 示例）
 py -3.13 -m venv .venv
@@ -271,15 +275,15 @@ docker compose start monitor
 
 ```ini
 [Unit]
-Description=CUHK CDMP PDF Monitor
+Description=IDADM Official Document Monitor
 After=network-online.target
 
 [Service]
 Type=simple
 User=monitor
-WorkingDirectory=/opt/cdmp-pdf-monitor
-EnvironmentFile=/opt/cdmp-pdf-monitor/.env
-ExecStart=/opt/cdmp-pdf-monitor/.venv/bin/uvicorn app.main:app --host 127.0.0.1 --port 8000 --workers 1
+WorkingDirectory=/opt/idadm-official-doc-monitor
+EnvironmentFile=/opt/idadm-official-doc-monitor/.env
+ExecStart=/opt/idadm-official-doc-monitor/.venv/bin/uvicorn app.main:app --host 127.0.0.1 --port 8000 --workers 1
 Restart=on-failure
 RestartSec=5
 
@@ -292,7 +296,7 @@ WantedBy=multi-user.target
 如果不想让 API 进程内置调度器，可以设置 `SCHEDULER_ENABLED=false`，用 cron 运行 CLI：
 
 ```cron
-*/30 * * * * cd /opt/cdmp-pdf-monitor && SCHEDULER_ENABLED=false .venv/bin/python -m app.cli check >> /var/log/cdmp-monitor.log 2>&1
+*/30 * * * * cd /opt/idadm-official-doc-monitor && SCHEDULER_ENABLED=false .venv/bin/python -m app.cli check >> /var/log/idadm-official-doc-monitor.log 2>&1
 ```
 
 不要同时启用内置调度器和 cron，否则两个进程可能重复抓取；当前设计按单机单写者使用。
@@ -314,6 +318,13 @@ Authorization: Bearer <key>
 ```
 
 `/healthz` 和 `/docs` 不需要鉴权。未设置 `API_KEY` 时所有接口公开，仅适合本机或可信内网。
+
+部署时的选择：
+
+- **通过公网域名暴露**：必须设置 `API_KEY`，否则任何人都能调用 `POST /check` 触发对外抓取，也能读取完整变更历史。
+- **仅本机或可信内网访问**：可以留空；但要确认端口没有映射到公网。
+- **调用方不方便加请求头**：优先改为内网访问或用反向代理限制来源 IP，不建议为了省事直接取消鉴权。
+- 修改 `API_KEY` 后需要重建容器：`docker compose up -d --force-recreate`。
 
 ### 文档 key
 

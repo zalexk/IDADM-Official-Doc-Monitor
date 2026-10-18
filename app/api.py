@@ -65,12 +65,11 @@ def create_app(settings: Settings | None = None) -> FastAPI:
                 scheduler.shutdown()
 
     app = FastAPI(
-        title="CUHK CDMP PDF Monitor",
+        title="IDADM Official Document Monitor",
         description=(
-            "Detects changes to monitored PDFs at three levels: HTTP validators, "
-            "SHA-256 of the file, and a content fingerprint built from extracted "
-            "text and table cells. Change reports include page-level text diffs "
-            "and table cell diffs.\n\n"
+            "Detects changes with a four-stage pipeline: HTTP validators, "
+            "SHA-256 of the file, a content fingerprint built from extracted "
+            "text and table cells, and page/table/cell-level diffs.\n\n"
             "All timestamps are UTC. When API_KEY is configured, send it as "
             "`X-API-Key` or `Authorization: Bearer <key>`."
         ),
@@ -119,7 +118,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     @app.get("/", include_in_schema=False)
     async def root() -> dict[str, Any]:
         return {
-            "name": "CUHK CDMP PDF Monitor",
+            "name": "IDADM Official Document Monitor",
             "version": APP_VERSION,
             "docs": "/docs",
             "health": "/healthz",
