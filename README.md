@@ -4,14 +4,13 @@
 >
 > The project is powered by vibe-coding.
 
-监控 IDADM 官网（[curriculum.html](https://www.idadm.cdmp.cuhk.edu.hk/curriculum.html)）上的 **9 份公开 PDF**，并区分「文件字节被替换」和「实际内容发生变化」：
+监控 IDADM 官网（[curriculum.html](https://www.idadm.cdmp.cuhk.edu.hk/curriculum.html)）上的 **8 份公开 PDF**（静态宣传册不监控），并区分「文件字节被替换」和「实际内容发生变化」：
 
 | 类别 | key | 文件 |
 | --- | --- | --- |
 | 等价对照表（CUHK 录取） | `sea-course-list-2023-24` … `sea-course-list-2026-27` | IDA/SEA Course List，4 个 cohort（其中 `sea-course-list` 无后缀键 = 2025-26，沿用历史键） |
 | 等价对照表（CUHK(SZ) 录取） | `sz-equivalence-2023-24`、`sz-equivalence-2025-26` | SZ 等价课程表，各覆盖两个 cohort |
 | University Core 安排 | `u-core-cuhk-cuhksz`、`u-core-2023-24` | U Core 2024-25 及以后（历史键）、2023-24 |
-| 其他 | `ida-ibba-leaflet` | Integrated BBA 宣传册 |
 
 完整清单以 [`config/documents.yaml`](config/documents.yaml) 为准；新增文档只需加条目并重启。约定：**每个文档的第一个 tag 是 `/updates` 页面的分组类别**（`equivalence-cuhk` / `equivalence-sz` / `u-core` / `other`）。
 
@@ -340,7 +339,7 @@ Authorization: Bearer <key>
 
 ### 文档 key
 
-全部 key 与 URL 见 [`config/documents.yaml`](config/documents.yaml)（9 份文档，按首个 tag 分为：CUHK 等价表、SZ 等价表、University Core、其他）。
+全部 key 与 URL 见 [`config/documents.yaml`](config/documents.yaml)（8 份文档，按首个 tag 分为：CUHK 等价表、SZ 等价表、University Core）。
 
 ### 主要接口
 

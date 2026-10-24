@@ -4,7 +4,7 @@
 
 ## 项目定位
 
-监控 CUHK CDMP 发布的 9 份公开 PDF（IDAADM 官网 curriculum.html 上的全部文件），判断：
+监控 CUHK CDMP 发布的 8 份公开 PDF（IDADM 官网 curriculum.html 上的课程相关文件，静态宣传册除外），判断：
 
 1. 文件字节是否变化；
 2. 内容是否真正变化；
@@ -71,7 +71,7 @@
 | `app/updates_page.py` | `/updates` 更新页路由：公开只读、聚合 JSON、页面私有契约 |
 | `app/static/updates.html` | 更新页本体：自包含 HTML/CSS/JS，无 CDN、无构建步骤 |
 | `app/cli.py` | `init-db`、`check`、`status`、`changes`、`show-change` |
-| `config/documents.yaml` | 被监控 URL 的登记表（9 份）；约定每个文档的**第一个 tag 是 `/updates` 页面的分组类别**（`equivalence-cuhk`/`equivalence-sz`/`u-core`/`other`），`tests/test_documents_config.py` 强制校验 |
+| `config/documents.yaml` | 被监控 URL 的登记表（8 份）；约定每个文档的**第一个 tag 是 `/updates` 页面的分组类别**（`equivalence-cuhk`/`equivalence-sz`/`u-core`/`other`），`tests/test_documents_config.py` 强制校验 |
 | `tests/` | 合成 PDF、mock HTTP origin、差分与 API 测试 |
 
 ## 常用命令
