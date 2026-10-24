@@ -61,9 +61,8 @@
                     ┌──────────────────────────────┐
                     │  CDMP 静态 PDF (2 个 URL)     │
                     └──────────────┬───────────────┘
-                                   │ HTTP GET
-                                   │ If-None-Match / If-Modified-Since
-                                   │ 每天至少一次强制完整下载
+                                   │ HTTP GET（默认每周一次完整下载）
+                                   │ 可配置 If-None-Match / If-Modified-Since
                                    ▼
                     ┌──────────────────────────────┐
                     │ fetcher.py                   │
@@ -109,7 +108,7 @@
 
 1. **HTTP 层**：`ETag` / `Last-Modified` 让 99% 的检查只收到 304，节省带宽，也减少对原站的压力。
 2. **字节层**：SHA-256 是“文件确实被替换”的最终依据。即使服务器返回 200 且内容相同，也不会误报内容变化。
-3. **内容层**：PDF 重新导出、时间戳变化、字体子集变化都会改变字节，但文本和表格可能完全相同。内容指纹把这些情况归为 `metadata_only`，避免“每天都说变了”。
+3. **内容层**：PDF 重新导出、时间戳变化、字体子集变化都会改变字节，但文本和表格可能完全相同。内容指纹把这些情况归为 `metadata_only`，避免“每次检查都说变了”。
 4. **差异层**：页面、表格、行、单元格对齐后输出字面差异。页面和表格都使用序列对齐，插入一页不会导致后面所有页都被误报为修改。
 
 ### 内容指纹的定义
@@ -121,7 +120,8 @@
 
 ### 防漏检设计
 
-- 默认每 24 小时至少做一次**不带条件头**的完整下载，避免原站 ETag 配置错误或中间缓存导致永远 304。
+- 默认每 7 天检查一次，且每次都是**不带条件头**的完整下载。周级频率下两份小 PDF 的流量可以忽略，也避免原站 ETag 配置错误或中间缓存导致漏检。
+- 如果以后提高检查频率，可把 `FULL_CHECK_INTERVAL_HOURS` 设为 `24`，让多数检查走 304，每天至少完整下载一次。
 - 网络错误和 429/5xx 最多重试 3 次，指数退避；4xx 不重试。
 - 失败不会覆盖上一个成功版本，只记录 `last_error` 和 `consecutive_failures`。
 - 每次检查都写入 `checks` 审计表（每文档保留最近 500 条）。
@@ -134,7 +134,7 @@
 | Web API | FastAPI + Uvicorn | 类型化 JSON、自动 OpenAPI、异步 |
 | HTTP | httpx | 流式下载、超时、条件请求 |
 | PDF | PyMuPDF 1.28.2 | 文本和规则表格抽取质量好，依赖单一 |
-| 调度 | APScheduler 3.x | 单进程内每 30 分钟触发，无需额外 Redis/Celery |
+| 调度 | APScheduler 3.x | 单进程内每 7 天触发，无需额外 Redis/Celery |
 | 存储 | SQLite (WAL) | 只有两份文档，单机零运维；状态和审计足够 |
 | 部署 | Docker Compose | 固定依赖和运行环境 |
 | 反向代理 | Caddy / Nginx（建议） | HTTPS、域名、限流、访问控制 |
@@ -222,7 +222,7 @@ uvicorn app.main:app --host 127.0.0.1 --port 8000 --workers 1
 - 健康检查：<http://127.0.0.1:8000/healthz>
 - API 默认无鉴权；生产环境务必设置 `API_KEY`。
 
-默认 `SCHEDULER_ENABLED=true`，启动 API 后会在约 2 秒后自动做一次检查，然后每 30 分钟一次。只想手动运行 CLI 时，设置 `SCHEDULER_ENABLED=false`。
+默认 `SCHEDULER_ENABLED=true`，启动 API 后会在约 2 秒后自动做一次检查，之后每 7 天一次。服务重启也会立即再检查一次。只想手动运行 CLI 时，设置 `SCHEDULER_ENABLED=false`。
 
 ### 手动检查
 
@@ -244,7 +244,8 @@ python -c "import secrets; print(secrets.token_hex(32))"
 # 编辑 .env：
 #   API_KEY=...
 #   USER_AGENT=...（把联系邮箱改成你的）
-#   CHECK_INTERVAL_MINUTES=30
+#   CHECK_INTERVAL_MINUTES=10080   # 7 天
+#   FULL_CHECK_INTERVAL_HOURS=0   # 每次检查都完整下载
 
 docker compose up -d --build
 docker compose logs -f
@@ -477,10 +478,10 @@ if latest and latest["id"] != cursor:
 | 变量 | 默认 | 说明 |
 | --- | --- | --- |
 | `API_KEY` | 空 | 空表示不鉴权；生产必须设置 |
-| `CHECK_INTERVAL_MINUTES` | `30` | 轮询间隔 |
+| `CHECK_INTERVAL_MINUTES` | `10080` | 轮询间隔（分钟），默认 7 天 |
 | `SCHEDULER_ENABLED` | `true` | 是否在 API 进程内定时检查 |
 | `CHECK_ON_START` | `true` | 启动后是否立即检查一次 |
-| `FULL_CHECK_INTERVAL_HOURS` | `24` | 至少多久做一次完整下载；`0` 表示每次都完整下载 |
+| `FULL_CHECK_INTERVAL_HOURS` | `0` | 至少多久做一次完整下载；`0` 表示每次都完整下载，周级检查默认使用此值 |
 | `HTTP_TIMEOUT_SECONDS` | `60` | 单次 HTTP 超时 |
 | `MAX_DOWNLOAD_BYTES` | `26214400` | 下载大小上限，防止异常响应 |
 | `USER_AGENT` | 内置值 | 建议改成带真实联系方式的标识 |
@@ -501,7 +502,7 @@ if latest and latest["id"] != cursor:
 - **安全**：设置强 `API_KEY`；优先用 Caddy/Nginx 提供 HTTPS；Compose 默认只监听 `127.0.0.1`；如果需要浏览器跨域访问，当前未开启 CORS，需要在代理层或应用层自行添加。
 - **限流**：应用未内置限流。公开部署时请在反向代理层限流。
 - **时间**：API 所有时间戳均为 UTC，带 `Z` 后缀。
-- **礼貌抓取**：默认 30 分钟一次，条件请求为主，每天一次完整下载。请把 `USER_AGENT` 中的联系方式改成你自己的，并遵守原站使用条款；不要缩短到分钟级造成压力。
+- **礼貌抓取**：默认每周一次完整下载。周级频率对原站压力很小；如果以后调高频率，建议把 `FULL_CHECK_INTERVAL_HOURS` 设为 `24`，让多数检查走条件请求。请把 `USER_AGENT` 中的联系方式改成你自己的，并遵守原站使用条款；不要缩短到分钟级造成压力。
 
 ## 10. 验证记录
 

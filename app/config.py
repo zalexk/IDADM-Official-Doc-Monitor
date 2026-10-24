@@ -75,8 +75,8 @@ class Settings:
     database_path: Path
     scheduler_enabled: bool = True
     check_on_start: bool = True
-    check_interval_minutes: int = 30
-    full_check_interval_hours: int = 24
+    check_interval_minutes: int = 10080
+    full_check_interval_hours: int = 0
     http_timeout_seconds: float = 60.0
     max_download_bytes: int = 25 * 1024 * 1024
     api_key: str | None = None
@@ -97,8 +97,8 @@ class Settings:
             else data_dir / "monitor.db"
         )
         api_key = os.getenv("API_KEY", "").strip() or None
-        interval = _env_int("CHECK_INTERVAL_MINUTES", 30, minimum=1)
-        full_interval = _env_int("FULL_CHECK_INTERVAL_HOURS", 24, minimum=0)
+        interval = _env_int("CHECK_INTERVAL_MINUTES", 10080, minimum=1)
+        full_interval = _env_int("FULL_CHECK_INTERVAL_HOURS", 0, minimum=0)
         timeout = _env_float("HTTP_TIMEOUT_SECONDS", 60.0, minimum=1.0)
         max_bytes = _env_int("MAX_DOWNLOAD_BYTES", 25 * 1024 * 1024, minimum=1024)
         max_diff = _env_int("MAX_DIFF_CHARS", 250_000, minimum=10_000)
