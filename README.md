@@ -4,10 +4,16 @@
 >
 > The project is powered by vibe-coding.
 
-监控以下两份公开 PDF，并区分「文件字节被替换」和「实际内容发生变化」：
+监控 IDADM 官网（[curriculum.html](https://www.idadm.cdmp.cuhk.edu.hk/curriculum.html)）上的 **9 份公开 PDF**，并区分「文件字节被替换」和「实际内容发生变化」：
 
-- `sea-course-list` — [IDA/SEA Course List, CUHK 2025-26](https://www.cdmp.cuhk.edu.hk/documents/IDA_SEA-Course%20list_CUHK_2025-26.pdf)
-- `u-core-cuhk-cuhksz` — [University Core between CUHK and CUHK(SZ), cohorts 2024-25 to 2026-27](https://www.cdmp.cuhk.edu.hk/documents/U%20core%20between%20CUHK%20&%20CUHKSZ_cohort%202024_25.pdf)
+| 类别 | key | 文件 |
+| --- | --- | --- |
+| 等价对照表（CUHK 录取） | `sea-course-list-2023-24` … `sea-course-list-2026-27` | IDA/SEA Course List，4 个 cohort（其中 `sea-course-list` 无后缀键 = 2025-26，沿用历史键） |
+| 等价对照表（CUHK(SZ) 录取） | `sz-equivalence-2023-24`、`sz-equivalence-2025-26` | SZ 等价课程表，各覆盖两个 cohort |
+| University Core 安排 | `u-core-cuhk-cuhksz`、`u-core-2023-24` | U Core 2024-25 及以后（历史键）、2023-24 |
+| 其他 | `ida-ibba-leaflet` | Integrated BBA 宣传册 |
+
+完整清单以 [`config/documents.yaml`](config/documents.yaml) 为准；新增文档只需加条目并重启。约定：**每个文档的第一个 tag 是 `/updates` 页面的分组类别**（`equivalence-cuhk` / `equivalence-sz` / `u-core` / `other`）。
 
 变更结果写入 SQLite，并通过 FastAPI 暴露状态、变更列表、变更详情、Markdown 报告和纯文本 unified diff。项目目录独立，不依赖同级其他项目。
 
@@ -334,10 +340,7 @@ Authorization: Bearer <key>
 
 ### 文档 key
 
-| key | 用途 |
-| --- | --- |
-| `sea-course-list` | IDA/SEA 课程对照表 |
-| `u-core-cuhk-cuhksz` | CUHK / CUHK(SZ) University Core 安排 |
+全部 key 与 URL 见 [`config/documents.yaml`](config/documents.yaml)（9 份文档，按首个 tag 分为：CUHK 等价表、SZ 等价表、University Core、其他）。
 
 ### 主要接口
 
@@ -361,7 +364,7 @@ Authorization: Bearer <key>
 给人看的 status page：一眼回答「官方文档有没有更新文件」。生产部署在 `https://idadm.alexzsk.xyz/updates`（反代配置见 `docs/deploy-1panel.md`）。
 
 - 顶部横幅直接给出结论：绿色「官方文档无更新」/ 蓝色「检测到官方文档更新」（含最近一次时间）/ 红色「检查失败」。
-- 每份文档一张卡片：状态徽章、当前版本摘要、**检查历史条**（每格一次检查：绿=无变化、蓝=检测到内容更新、红=检查失败，hover 看详情）。
+- 每份文档一张卡片，**按第一个 tag 分组显示**（等价对照表 CUHK 录取 / CUHK(SZ) 录取 / University Core / 其他）；状态徽章、当前版本摘要、**检查历史条**（每格一次检查：绿=无变化、蓝=检测到内容更新、红=检查失败，hover 看详情）。
 - 变更时间线（跨文档最近 20 条），点击查看页/表格/单元格级差异（单元格 old→new 红绿高亮）与着色 unified diff，并可跳转完整 Markdown 报告。
 - 界面支持简体中文 / 繁體中文 / English 三语切换（右上角切换器，选择记忆在浏览器；首次访问跟随浏览器语言，`zh-TW/zh-HK/zh-Hant` 自动落繁体）。
 - 自动刷新对齐检查间隔（`CHECK_INTERVAL_MINUTES`，上限一天；拉取失败 60 秒重试），回到标签页时立即刷新；深浅色自适应。

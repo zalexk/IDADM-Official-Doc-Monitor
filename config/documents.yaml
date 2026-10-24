@@ -1,17 +1,78 @@
+# Registry of monitored official PDFs.
+#
+# Convention: the FIRST tag is the display category the /updates page groups
+# cards by. Supported categories: equivalence-cuhk, equivalence-sz, u-core,
+# other. Keep the first tag within that set.
+#
+# Cohort coverage notes:
+# - sea-course-list (no suffix) is the 2025-26 file; it predates the
+#   cohort-suffixed keys and keeps its history under the original key.
+# - The two SZ equivalence lists each cover two cohorts; one file = one entry.
+# - u-core-cuhk-cuhksz is the "2024-25 and thereafter" file.
+
 documents:
   - key: sea-course-list
     title: "IDA/SEA Course List - CUHK 2025-26"
     url: "https://www.cdmp.cuhk.edu.hk/documents/IDA_SEA-Course%20list_CUHK_2025-26.pdf"
     tags:
+      - equivalence-cuhk
+      - "cohort-2025-26"
       - ida
       - sea
-      - course-list
-      - "2025-26"
+
+  - key: sea-course-list-2023-24
+    title: "IDA/SEA Course List - CUHK 2023-24"
+    url: "https://www.cdmp.cuhk.edu.hk/documents/IDA_SEA-Course%20list_CUHK_2023-24.pdf"
+    tags:
+      - equivalence-cuhk
+      - "cohort-2023-24"
+
+  - key: sea-course-list-2024-25
+    title: "IDA/SEA Course List - CUHK 2024-25"
+    url: "https://www.cdmp.cuhk.edu.hk/documents/IDA_SEA-Course%20list_CUHK_2024-25.pdf"
+    tags:
+      - equivalence-cuhk
+      - "cohort-2024-25"
+
+  - key: sea-course-list-2026-27
+    title: "IDA/SEA Course List - CUHK 2026-27"
+    url: "https://www.cdmp.cuhk.edu.hk/documents/IDA_SEA-Course%20list_CUHK_2026-27.pdf"
+    tags:
+      - equivalence-cuhk
+      - "cohort-2026-27"
+
+  - key: sz-equivalence-2023-24
+    title: "Equivalence List (SZ) - Cohorts 2023-24 & 2024-25"
+    url: "https://www.cdmp.cuhk.edu.hk/documents/X%20&%20IDA_equivalent%20course%20list%20_SZ_2023-24%20and%202024-25%20Cohorts.pdf"
+    tags:
+      - equivalence-sz
+      - "cohort-2023-24"
+      - "cohort-2024-25"
+
+  - key: sz-equivalence-2025-26
+    title: "Equivalence List (SZ) - Cohorts 2025-26 & Thereafter"
+    url: "https://www.cdmp.cuhk.edu.hk/documents/X%20&%20IDA_%20equivalent%20course%20list_SZ_25-26%20and%20thereafter.pdf"
+    tags:
+      - equivalence-sz
+      - "cohort-2025-26"
 
   - key: u-core-cuhk-cuhksz
-    title: "University Core between CUHK and CUHK(SZ) - cohorts 2024-25 to 2026-27"
+    title: "University Core between CUHK and CUHK(SZ) - Cohorts 2024-25 to 2026-27"
     url: "https://www.cdmp.cuhk.edu.hk/documents/U%20core%20between%20CUHK%20&%20CUHKSZ_cohort%202024_25.pdf"
     tags:
-      - university-core
+      - u-core
+      - "cohort-2024-25"
       - cuhksz
-      - "2024-25"
+
+  - key: u-core-2023-24
+    title: "University Core between CUHK and CUHK(SZ) - Cohort 2023-24"
+    url: "https://www.cdmp.cuhk.edu.hk/documents/U%20core%20between%20CUHK%20&%20CUHKSZ_cohort%202023_24.pdf"
+    tags:
+      - u-core
+      - "cohort-2023-24"
+
+  - key: ida-ibba-leaflet
+    title: "IDA Integrated BBA Leaflet"
+    url: "https://www.idadm.cdmp.cuhk.edu.hk/documents/IDAIBBA_Leaflet.pdf"
+    tags:
+      - other

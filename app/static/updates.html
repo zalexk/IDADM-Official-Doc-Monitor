@@ -103,6 +103,16 @@
   h2 { font-size: 15px; margin: 32px 0 12px; display: flex; align-items: center; gap: 8px; }
   h2::before { content: ""; width: 4px; height: 14px; border-radius: 2px; background: var(--accent); }
 
+  .group-head {
+    display: flex; align-items: center; gap: 8px;
+    margin: 20px 2px 10px; font-size: 13px; font-weight: 600; color: var(--muted);
+  }
+  .group-head:first-child { margin-top: 4px; }
+  .g-count {
+    background: var(--chip); color: var(--faint); border-radius: 999px;
+    padding: 0 9px; font-size: 11.5px; font-weight: 600; line-height: 18px;
+  }
+
   .card {
     background: var(--card); border: 1px solid var(--border); border-radius: var(--radius);
     padding: 18px 20px; margin-bottom: 14px; box-shadow: var(--shadow);
@@ -305,6 +315,11 @@ var I18N = {
     metaLastCheck: "最后检查", metaNextCheck: "下次检查", metaInterval: "检查间隔", metaGenerated: "生成于",
     notYet: "尚未检查", nextScheduled: "约 {time}", nextWaiting: "等待调度", schedOff: "调度器未启用",
     sectionDocs: "监控文档", sectionTimeline: "变更时间线",
+    statsDocs: "监控 {n} 份", statsChanged: "有更新 {n}", statsFailed: "失败 {n}",
+    group_equivalence_cuhk: "等价对照表（CUHK 录取）",
+    group_equivalence_sz: "等价对照表（CUHK(SZ) 录取）",
+    group_u_core: "University Core 安排",
+    group_other: "其他",
     footer: "本页面只读展示监控结果，不会触发新的检查 · 时间均为本地时区",
     badgeOk: "无更新", badgeChanged: "有更新", badgeError: "检查失败",
     currentVersion: "当前版本：{time} 抓取 · {pages} 页 · {size} · {sha}",
@@ -357,6 +372,11 @@ var I18N = {
     metaLastCheck: "最後檢查", metaNextCheck: "下次檢查", metaInterval: "檢查間隔", metaGenerated: "生成於",
     notYet: "尚未檢查", nextScheduled: "約 {time}", nextWaiting: "等待排程", schedOff: "排程器未啟用",
     sectionDocs: "監控文件", sectionTimeline: "變更時間線",
+    statsDocs: "監控 {n} 份", statsChanged: "有更新 {n}", statsFailed: "失敗 {n}",
+    group_equivalence_cuhk: "等價對照表（CUHK 錄取）",
+    group_equivalence_sz: "等價對照表（CUHK(SZ) 錄取）",
+    group_u_core: "University Core 安排",
+    group_other: "其他",
     footer: "本頁面唯讀顯示監控結果，不會觸發新的檢查 · 時間均為本地時區",
     badgeOk: "無更新", badgeChanged: "有更新", badgeError: "檢查失敗",
     currentVersion: "目前版本：{time} 擷取 · {pages} 頁 · {size} · {sha}",
@@ -409,6 +429,11 @@ var I18N = {
     metaLastCheck: "Last check", metaNextCheck: "Next check", metaInterval: "Interval", metaGenerated: "Generated",
     notYet: "not yet", nextScheduled: "~{time}", nextWaiting: "waiting for schedule", schedOff: "scheduler disabled",
     sectionDocs: "Monitored documents", sectionTimeline: "Change timeline",
+    statsDocs: "{n} watched", statsChanged: "{n} updated", statsFailed: "{n} failed",
+    group_equivalence_cuhk: "Equivalence lists — admitted by CUHK",
+    group_equivalence_sz: "Equivalence lists — admitted by CUHK(SZ)",
+    group_u_core: "University Core arrangements",
+    group_other: "Other",
     footer: "Read-only view of monitoring results; never triggers new checks · times shown in your local timezone",
     badgeOk: "No change", badgeChanged: "Updated", badgeError: "Check failed",
     currentVersion: "Current version: fetched {time} · {pages} pages · {size} · {sha}",
@@ -648,7 +673,11 @@ function renderMeta(data) {
   function chip(label, value) {
     return '<span class="chipm"><span>' + esc(label) + '</span><b>' + esc(value) + "</b></span>";
   }
+  var changedCount = docs.filter(function (d) { return d.latest_change; }).length;
+  var failedCount = docs.filter(function (d) { return d.monitor.consecutive_failures > 0; }).length;
   $("meta").innerHTML =
+    chip(t("statsDocs", { n: docs.length }),
+         t("statsChanged", { n: changedCount }) + " · " + t("statsFailed", { n: failedCount })) +
     chip(t("metaLastCheck"), lastChecked ? relTime(lastChecked) : t("notYet")) +
     chip(t("metaNextCheck"), next) +
     chip(t("metaInterval"), fmtInterval(s.interval_minutes)) +
@@ -659,62 +688,89 @@ function legendItem(cls, label) {
   return '<span class="lg"><i class="lg-dot ' + cls + '"></i>' + esc(label) + "</span>";
 }
 
+// 卡片按文档第一个 tag 分组（documents.yaml 约定：首个 tag 为显示类别）。
+var GROUP_ORDER = ["equivalence-cuhk", "equivalence-sz", "u-core", "other"];
+function groupOf(doc) {
+  var tags = doc.tags || [];
+  for (var i = 0; i < GROUP_ORDER.length - 1; i++) {
+    if (tags.indexOf(GROUP_ORDER[i]) >= 0) return GROUP_ORDER[i];
+  }
+  return "other";
+}
+
+function renderDocCard(d) {
+  var failing = d.monitor.consecutive_failures > 0;
+  var changed = !!d.latest_change;
+  var badgeClass = failing ? "error" : (changed ? "changed" : "ok");
+  var badgeLabel = failing ? t("badgeError") : (changed ? t("badgeChanged") : t("badgeOk"));
+
+  var errbox = failing && d.monitor.last_error
+    ? '<div class="errbox">' + esc(d.monitor.last_error) + "</div>" : "";
+
+  var v = d.current_version;
+  var ver = v
+    ? t("currentVersion", {
+        time: fmtAbs(v.fetched_at), pages: v.page_count,
+        size: fmtBytes(v.size_bytes), sha: String(v.sha256 || "").slice(0, 8)
+      })
+    : t("notFetched");
+
+  var checks = d.checks || [];
+  var bar, foot;
+  if (checks.length) {
+    bar = '<div class="bar">' + checks.map(function (c) {
+      var tip = fmtAbs(c.checked_at) + " · " + t("outcome_" + c.outcome) +
+        " · HTTP " + (c.http_status == null ? "—" : c.http_status) +
+        " · " + fmtDuration(c.duration_ms);
+      return '<div class="seg ' + segClass(c.outcome) + '" title="' + esc(tip) + '"></div>';
+    }).join("") + "</div>";
+    foot = '<div class="bar-foot"><span>' + esc(t("checksBarCount", { n: checks.length })) + "</span>" +
+      '<span class="legend">' +
+      legendItem("ok", t("legendOk")) +
+      legendItem("changed", t("legendChanged")) +
+      legendItem("error", t("legendError")) +
+      "</span></div>";
+  } else {
+    bar = "";
+    foot = '<div class="bar-foot"><span>' + esc(t("checksEmpty")) + "</span></div>";
+  }
+
+  var latest;
+  if (d.latest_change) {
+    latest = '<div class="latest">' + esc(t("latestPrefix")) + "<b>" +
+      esc(relTime(d.latest_change.detected_at)) + "</b> · " + esc(d.latest_change.headline) +
+      ' <button type="button" class="link" onclick="openDetail(' + d.latest_change.id + ')">' +
+      esc(t("viewReport")) + "</button></div>";
+  } else {
+    latest = '<div class="latest muted">' + esc(t("baselineNoChange")) + "</div>";
+  }
+
+  return '<div class="card">' +
+    '<div class="head"><span class="title"><a href="' + esc(d.url) + '" target="_blank" rel="noopener">' +
+    esc(d.title) + "</a></span>" +
+    '<span class="badge ' + badgeClass + '">' + esc(badgeLabel) + "</span></div>" +
+    '<div class="ver">' + esc(ver) + "</div>" + errbox + bar + foot + latest +
+    "</div>";
+}
+
 function renderDocs(data) {
   var host = $("docs");
-  host.innerHTML = (data.documents || []).map(function (d) {
-    var failing = d.monitor.consecutive_failures > 0;
-    var changed = !!d.latest_change;
-    var badgeClass = failing ? "error" : (changed ? "changed" : "ok");
-    var badgeLabel = failing ? t("badgeError") : (changed ? t("badgeChanged") : t("badgeOk"));
-
-    var errbox = failing && d.monitor.last_error
-      ? '<div class="errbox">' + esc(d.monitor.last_error) + "</div>" : "";
-
-    var v = d.current_version;
-    var ver = v
-      ? t("currentVersion", {
-          time: fmtAbs(v.fetched_at), pages: v.page_count,
-          size: fmtBytes(v.size_bytes), sha: String(v.sha256 || "").slice(0, 8)
-        })
-      : t("notFetched");
-
-    var checks = d.checks || [];
-    var bar, foot;
-    if (checks.length) {
-      bar = '<div class="bar">' + checks.map(function (c) {
-        var tip = fmtAbs(c.checked_at) + " · " + t("outcome_" + c.outcome) +
-          " · HTTP " + (c.http_status == null ? "—" : c.http_status) +
-          " · " + fmtDuration(c.duration_ms);
-        return '<div class="seg ' + segClass(c.outcome) + '" title="' + esc(tip) + '"></div>';
-      }).join("") + "</div>";
-      foot = '<div class="bar-foot"><span>' + esc(t("checksBarCount", { n: checks.length })) + "</span>" +
-        '<span class="legend">' +
-        legendItem("ok", t("legendOk")) +
-        legendItem("changed", t("legendChanged")) +
-        legendItem("error", t("legendError")) +
-        "</span></div>";
-    } else {
-      bar = "";
-      foot = '<div class="bar-foot"><span>' + esc(t("checksEmpty")) + "</span></div>";
-    }
-
-    var latest;
-    if (d.latest_change) {
-      latest = '<div class="latest">' + esc(t("latestPrefix")) + "<b>" +
-        esc(relTime(d.latest_change.detected_at)) + "</b> · " + esc(d.latest_change.headline) +
-        ' <button type="button" class="link" onclick="openDetail(' + d.latest_change.id + ')">' +
-        esc(t("viewReport")) + "</button></div>";
-    } else {
-      latest = '<div class="latest muted">' + esc(t("baselineNoChange")) + "</div>";
-    }
-
-    return '<div class="card">' +
-      '<div class="head"><span class="title"><a href="' + esc(d.url) + '" target="_blank" rel="noopener">' +
-      esc(d.title) + "</a></span>" +
-      '<span class="badge ' + badgeClass + '">' + esc(badgeLabel) + "</span></div>" +
-      '<div class="ver">' + esc(ver) + "</div>" + errbox + bar + foot + latest +
-      "</div>";
-  }).join("");
+  var docs = data.documents || [];
+  var buckets = {};
+  GROUP_ORDER.forEach(function (g) { buckets[g] = []; });
+  docs.forEach(function (d) { buckets[groupOf(d)].push(d); });
+  var html = "";
+  GROUP_ORDER.forEach(function (g) {
+    var items = buckets[g];
+    if (!items.length) return;
+    items = items.slice().sort(function (a, b) {
+      return a.title.localeCompare(b.title, currentLang === "en" ? "en" : "zh-Hans-CN");
+    });
+    html += '<div class="group-head"><span>' + esc(t("group_" + g.replace(/-/g, "_"))) + "</span>" +
+      '<span class="g-count">' + items.length + "</span></div>" +
+      items.map(renderDocCard).join("");
+  });
+  host.innerHTML = html;
 }
 
 function renderTimeline(data) {

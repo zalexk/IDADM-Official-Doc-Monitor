@@ -46,6 +46,10 @@ def test_updates_page_served(client: TestClient) -> None:
     for marker in ('data-lang="zh-CN"', 'data-lang="zh-TW"', 'data-lang="en"',
                    "data-i18n", "navigator.languages"):
         assert marker in response.text, marker
+    # Grouped rendering by the document's first tag.
+    for marker in ("group_equivalence_cuhk", "group_equivalence_sz", "group_u_core",
+                   "group_other", "GROUP_ORDER"):
+        assert marker in response.text, marker
 
 
 def test_updates_page_end_to_end(
