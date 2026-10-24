@@ -116,7 +116,7 @@ docker compose logs -f --tail=100
 - 配置只从环境变量进入 `Settings`；新增配置时同步更新 `.env.example` 和 README。
 - API 统一挂在 `/api/v1` 下；对外字段由 `presenters.py` 输出，不要让数据库列名直接泄漏到 API。
 - API 变更以向后兼容为默认：新增字段可以，重命名或删除字段必须升级 API 版本。
-- `/updates` 是给人看的更新页命名空间：公开只读、不走 API Key、只处理 GET、绝不触发 `POST /check`、不进 OpenAPI。它只暴露非敏感字段（公开 PDF 的标题/URL/时间戳/变更报告），与 `app/static/updates.html` 一起版本化，不受 `/api/v1` 的向后兼容承诺约束；改动 `updates.html` 的脚本时跑 `tests/test_updates_page.py::test_updates_page_script_has_valid_syntax`。
+- `/updates` 是给人看的更新页命名空间：公开只读、不走 API Key、只处理 GET、绝不触发 `POST /check`、不进 OpenAPI。它只暴露非敏感字段（公开 PDF 的标题/URL/时间戳/变更报告），与 `app/static/updates.html` 一起版本化，不受 `/api/v1` 的向后兼容承诺约束；改动 `updates.html` 的脚本时跑 `tests/test_updates_page.py::test_updates_page_script_has_valid_syntax`。页面文案支持简/繁/英三语（`I18N` 字典内联在 `updates.html`），默认跟随浏览器语言，用户选择存 `localStorage`；数据库里的变更报告（headline/markdown）仍始终是中文。
 - 用户可见的变更报告用中文；代码、变量名、docstring 用英文。日期与文件路径使用跨平台写法。
 - 网络请求只在 `fetcher.py` 中做；不要在路由或差分代码里直接发 HTTP。
 - 抓取保持低频、带真实联系方式的 `User-Agent`，不要压测原站。

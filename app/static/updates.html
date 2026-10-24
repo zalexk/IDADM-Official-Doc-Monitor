@@ -3,133 +3,210 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>IDADM 官方文档更新监控</title>
+<title>官方文档更新监控</title>
+<link rel="icon" href="data:image/svg+xml;charset=utf-8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='86'>📄</text></svg>">
 <style>
   :root {
-    --bg: #f5f7fa; --card: #ffffff; --border: #e5e7eb;
-    --text: #1f2937; --muted: #6b7280; --faint: #9ca3af;
-    --ok: #16a34a; --ok-bg: rgba(22, 163, 74, 0.10);
-    --changed: #2563eb; --changed-bg: rgba(37, 99, 235, 0.10);
-    --error: #dc2626; --error-bg: rgba(220, 38, 38, 0.10);
-    --chip: #eef2f7; --shadow: 0 1px 3px rgba(0,0,0,0.06);
+    --bg: #f4f6fa; --card: #ffffff; --border: #e4e8ef; --border-strong: #d3dae4;
+    --text: #182131; --muted: #5c6a7e; --faint: #95a1b3;
+    --ok: #159c52; --ok-soft: rgba(21, 156, 82, 0.12);
+    --accent: #2f6bff; --accent-soft: rgba(47, 107, 255, 0.11);
+    --error: #dc2f2f; --error-soft: rgba(220, 47, 47, 0.11);
+    --chip: #eef2f7; --radius: 14px;
+    --shadow: 0 1px 2px rgba(16,24,40,.05), 0 1px 3px rgba(16,24,40,.07);
+    --shadow-lg: 0 12px 32px rgba(16,24,40,.16);
   }
   @media (prefers-color-scheme: dark) {
     :root {
-      --bg: #0f172a; --card: #1e293b; --border: #334155;
-      --text: #e2e8f0; --muted: #94a3b8; --faint: #64748b;
-      --ok: #4ade80; --ok-bg: rgba(74, 222, 128, 0.12);
-      --changed: #60a5fa; --changed-bg: rgba(96, 165, 250, 0.12);
-      --error: #f87171; --error-bg: rgba(248, 113, 113, 0.12);
-      --chip: #2b3a52; --shadow: 0 1px 3px rgba(0,0,0,0.4);
+      --bg: #0b111f; --card: #141d30; --border: #26334c; --border-strong: #31405e;
+      --text: #e7edf6; --muted: #9aa7ba; --faint: #66748c;
+      --ok: #4ade80; --ok-soft: rgba(74, 222, 128, 0.13);
+      --accent: #6aa0ff; --accent-soft: rgba(106, 160, 255, 0.14);
+      --error: #f87171; --error-soft: rgba(248, 113, 113, 0.13);
+      --chip: #1e2a44;
+      --shadow: 0 1px 2px rgba(0,0,0,.35);
+      --shadow-lg: 0 14px 40px rgba(0,0,0,.5);
     }
   }
   * { box-sizing: border-box; }
+  html { -webkit-text-size-adjust: 100%; }
   body {
     margin: 0; background: var(--bg); color: var(--text);
-    font: 15px/1.6 system-ui, -apple-system, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
+    font: 15px/1.65 system-ui, -apple-system, "Segoe UI", "PingFang SC", "PingFang TC", "Microsoft JhengHei", "Microsoft YaHei", sans-serif;
+    -webkit-font-smoothing: antialiased;
   }
-  .wrap { max-width: 880px; margin: 0 auto; padding: 28px 20px 60px; }
-  a { color: var(--changed); text-decoration: none; }
+  .wrap { max-width: 920px; margin: 0 auto; padding: 30px 22px 64px; }
+  a { color: var(--accent); text-decoration: none; }
   a:hover { text-decoration: underline; }
+  button { font-family: inherit; }
+  :focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 4px; }
 
-  header h1 { margin: 0 0 4px; font-size: 22px; }
-  header .sub { color: var(--muted); font-size: 13px; }
-  header .refresh { float: right; color: var(--faint); font-size: 12px; margin-top: 6px; }
+  /* ---------- header ---------- */
+  .head-row { display: flex; justify-content: space-between; align-items: flex-start; gap: 16px; }
+  h1 { margin: 0 0 4px; font-size: 21px; letter-spacing: .2px; }
+  .sub { color: var(--muted); font-size: 13px; }
+  .head-right { display: flex; flex-direction: column; align-items: flex-end; gap: 8px; flex: none; }
+  .lang-switch {
+    display: inline-flex; border: 1px solid var(--border); border-radius: 999px;
+    overflow: hidden; background: var(--card); box-shadow: var(--shadow);
+  }
+  .lang-switch button {
+    padding: 5px 14px; font-size: 12.5px; color: var(--muted); background: none;
+    border: none; cursor: pointer; transition: background .15s, color .15s;
+  }
+  .lang-switch button + button { border-left: 1px solid var(--border); }
+  .lang-switch button:hover { color: var(--text); }
+  .lang-switch button.active { background: var(--accent-soft); color: var(--accent); font-weight: 600; }
+  .refresh { color: var(--faint); font-size: 12px; min-height: 18px; }
 
+  /* ---------- hero ---------- */
   .hero {
-    margin: 22px 0 10px; padding: 18px 20px; border-radius: 12px;
+    margin: 24px 0 0; padding: 20px 22px; border-radius: 16px;
     background: var(--card); border: 1px solid var(--border);
     border-left: 5px solid var(--ok); box-shadow: var(--shadow);
+    display: flex; gap: 15px; align-items: flex-start;
   }
-  .hero.changed { border-left-color: var(--changed); }
+  .hero.changed { border-left-color: var(--accent); }
   .hero.error   { border-left-color: var(--error); }
-  .hero .title { font-size: 19px; font-weight: 600; display: flex; align-items: center; gap: 10px; }
-  .hero .title .dot { width: 11px; height: 11px; border-radius: 50%; background: var(--ok); flex: none; }
-  .hero.changed .title .dot { background: var(--changed); }
-  .hero.error   .title .dot { background: var(--error); }
-  .hero .desc { color: var(--muted); font-size: 13.5px; margin-top: 4px; }
+  .hero .icon {
+    width: 44px; height: 44px; border-radius: 12px; flex: none;
+    display: flex; align-items: center; justify-content: center;
+    background: var(--ok-soft); color: var(--ok);
+  }
+  .hero.changed .icon { background: var(--accent-soft); color: var(--accent); }
+  .hero.error   .icon { background: var(--error-soft); color: var(--error); }
+  .hero .icon svg { width: 22px; height: 22px; }
+  .hero.changed .icon, .hero.error .icon { animation: pulse 2.4s ease-out infinite; }
+  @keyframes pulse {
+    0%   { box-shadow: 0 0 0 0 var(--accent-soft); }
+    70%  { box-shadow: 0 0 0 12px rgba(0,0,0,0); }
+    100% { box-shadow: 0 0 0 0 rgba(0,0,0,0); }
+  }
+  .hero .title { font-size: 19px; font-weight: 650; }
+  .hero .desc { color: var(--muted); font-size: 13.5px; margin-top: 3px; }
 
-  .meta { display: flex; flex-wrap: wrap; gap: 8px 26px; color: var(--muted); font-size: 13px; margin: 0 0 26px; }
-  .meta b { color: var(--text); font-weight: 600; }
+  /* ---------- meta chips ---------- */
+  .meta { display: flex; flex-wrap: wrap; gap: 8px 10px; margin: 16px 0 4px; }
+  .chipm {
+    display: inline-flex; align-items: center; gap: 7px;
+    background: var(--card); border: 1px solid var(--border); border-radius: 999px;
+    padding: 4px 13px; font-size: 12.5px; color: var(--muted); box-shadow: var(--shadow);
+  }
+  .chipm b { color: var(--text); font-weight: 600; }
 
   .notice {
-    display: none; margin: 0 0 18px; padding: 10px 14px; border-radius: 8px;
-    background: var(--error-bg); color: var(--error); font-size: 13.5px;
+    display: none; margin: 14px 0 0; padding: 10px 14px; border-radius: 10px;
+    background: var(--error-soft); color: var(--error); font-size: 13.5px;
   }
 
-  h2 { font-size: 15px; margin: 30px 0 12px; color: var(--text); }
+  /* ---------- sections ---------- */
+  h2 { font-size: 15px; margin: 32px 0 12px; display: flex; align-items: center; gap: 8px; }
+  h2::before { content: ""; width: 4px; height: 14px; border-radius: 2px; background: var(--accent); }
 
   .card {
-    background: var(--card); border: 1px solid var(--border); border-radius: 12px;
-    padding: 18px 20px; margin-bottom: 16px; box-shadow: var(--shadow);
+    background: var(--card); border: 1px solid var(--border); border-radius: var(--radius);
+    padding: 18px 20px; margin-bottom: 14px; box-shadow: var(--shadow);
+    transition: transform .16s ease, box-shadow .16s ease, border-color .16s ease;
   }
-  .card .head { display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; }
-  .card .head .title { font-size: 16px; font-weight: 600; }
+  .card:hover { transform: translateY(-2px); box-shadow: var(--shadow-lg); border-color: var(--border-strong); }
+  .card .head { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+  .card .head .title { font-size: 15.5px; font-weight: 600; }
   .badge {
-    margin-left: auto; font-size: 12px; font-weight: 600; padding: 2px 10px;
+    margin-left: auto; display: inline-flex; align-items: center; gap: 6px;
+    font-size: 12px; font-weight: 600; padding: 3px 11px;
     border-radius: 999px; white-space: nowrap;
   }
-  .badge.ok { background: var(--ok-bg); color: var(--ok); }
-  .badge.changed { background: var(--changed-bg); color: var(--changed); }
-  .badge.error { background: var(--error-bg); color: var(--error); }
-  .card .ver { color: var(--muted); font-size: 13px; margin-top: 6px; }
+  .badge::before { content: ""; width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
+  .badge.ok { background: var(--ok-soft); color: var(--ok); }
+  .badge.changed { background: var(--accent-soft); color: var(--accent); }
+  .badge.error { background: var(--error-soft); color: var(--error); }
+  .card .ver { color: var(--muted); font-size: 13px; margin-top: 7px; }
   .card .errbox {
     margin-top: 10px; padding: 8px 12px; border-radius: 8px; font-size: 13px;
-    background: var(--error-bg); color: var(--error); word-break: break-all;
+    background: var(--error-soft); color: var(--error); word-break: break-all;
   }
-  .bar { display: flex; gap: 2px; margin-top: 14px; }
-  .bar .seg { flex: 1 1 0; min-width: 5px; height: 30px; border-radius: 3px; background: var(--ok-bg); }
-  .bar .seg.ok { background: var(--ok); opacity: 0.55; }
-  .bar .seg.ok:hover { opacity: 1; }
-  .bar .seg.changed { background: var(--changed); }
+  .bar { display: flex; gap: 3px; margin-top: 14px; }
+  .bar .seg {
+    flex: 1 1 0; min-width: 4px; height: 26px; border-radius: 4px;
+    background: var(--chip); transition: transform .12s ease, opacity .12s ease;
+  }
+  .bar .seg.ok { background: var(--ok); opacity: .72; }
+  .bar .seg.ok:hover { opacity: 1; transform: scaleY(1.12); }
+  .bar .seg.changed { background: var(--accent); }
+  .bar .seg.changed:hover, .bar .seg.error:hover { transform: scaleY(1.12); }
   .bar .seg.error { background: var(--error); }
-  .bar-label { color: var(--faint); font-size: 12px; margin-top: 4px; }
-  .latest { margin-top: 12px; font-size: 13.5px; }
+  .bar-foot { display: flex; justify-content: space-between; gap: 10px; flex-wrap: wrap; margin-top: 7px; }
+  .bar-foot > span { color: var(--faint); font-size: 12px; }
+  .legend { display: inline-flex; gap: 14px; }
+  .lg { display: inline-flex; align-items: center; gap: 5px; color: var(--faint); font-size: 12px; }
+  .lg-dot { width: 8px; height: 8px; border-radius: 3px; display: inline-block; }
+  .lg-dot.ok { background: var(--ok); }
+  .lg-dot.changed { background: var(--accent); }
+  .lg-dot.error { background: var(--error); }
+  .latest { margin-top: 13px; font-size: 13.5px; padding-top: 12px; border-top: 1px dashed var(--border); }
   .latest .muted { color: var(--muted); }
   button.link {
-    background: none; border: 1px solid var(--border); color: var(--changed);
-    border-radius: 6px; padding: 2px 10px; font-size: 12.5px; cursor: pointer;
+    background: none; border: 1px solid var(--border); color: var(--accent);
+    border-radius: 8px; padding: 3px 12px; font-size: 12.5px; cursor: pointer;
+    transition: background .15s, border-color .15s;
   }
-  button.link:hover { background: var(--changed-bg); }
+  button.link:hover { background: var(--accent-soft); border-color: var(--accent); }
 
+  /* ---------- timeline ---------- */
   .timeline-item {
-    display: flex; gap: 12px; align-items: baseline; padding: 10px 4px;
-    border-bottom: 1px solid var(--border); cursor: pointer;
+    display: flex; gap: 12px; align-items: baseline; padding: 12px 10px;
+    border-bottom: 1px solid var(--border); cursor: pointer; border-radius: 10px;
+    transition: background .13s ease;
   }
   .timeline-item:hover { background: var(--card); }
   .timeline-item:last-child { border-bottom: none; }
-  .timeline-item .t-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--changed); flex: none; position: relative; top: -1px; }
+  .timeline-item .t-dot {
+    width: 9px; height: 9px; border-radius: 50%; background: var(--accent); flex: none;
+    position: relative; top: -1px; box-shadow: 0 0 0 3px var(--accent-soft);
+  }
   .timeline-item .t-body { flex: 1; min-width: 0; }
   .timeline-item .t-title { font-size: 14px; }
   .timeline-item .t-title .doc { color: var(--muted); font-size: 12.5px; margin-right: 8px; }
   .timeline-item .t-time { color: var(--faint); font-size: 12.5px; white-space: nowrap; }
-  .empty { color: var(--muted); font-size: 13.5px; padding: 14px 4px; }
+  .empty { color: var(--muted); font-size: 13.5px; padding: 16px 6px; }
 
+  /* ---------- modal ---------- */
   .overlay {
-    display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.55);
+    display: none; position: fixed; inset: 0; background: rgba(6,10,20,.55);
+    -webkit-backdrop-filter: blur(5px); backdrop-filter: blur(5px);
     z-index: 40; padding: 24px;
   }
   .overlay.open { display: flex; align-items: flex-start; justify-content: center; }
   .dialog {
-    background: var(--card); border: 1px solid var(--border); border-radius: 12px;
+    background: var(--card); border: 1px solid var(--border); border-radius: 16px;
     max-width: 880px; width: 100%; max-height: calc(100vh - 48px); overflow: auto;
-    padding: 22px 26px; box-shadow: 0 10px 40px rgba(0,0,0,0.25);
+    padding: 24px 28px; box-shadow: var(--shadow-lg);
+    animation: rise .18s ease;
   }
-  .dialog .d-close { float: right; background: none; border: none; color: var(--muted); font-size: 20px; cursor: pointer; line-height: 1; }
-  .dialog h3 { margin: 0 40px 2px 0; font-size: 16.5px; }
-  .dialog .d-sub { color: var(--muted); font-size: 13px; margin-bottom: 14px; }
-  .chips { display: flex; flex-wrap: wrap; gap: 6px; margin: 10px 0 4px; }
-  .chip { background: var(--chip); border-radius: 999px; padding: 2px 10px; font-size: 12px; color: var(--text); }
-  .chip b { color: var(--changed); }
+  @keyframes rise {
+    from { opacity: 0; transform: translateY(14px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+  .dialog .d-close {
+    float: right; width: 30px; height: 30px; border-radius: 50%;
+    background: none; border: 1px solid var(--border); color: var(--muted);
+    font-size: 15px; cursor: pointer; line-height: 1; transition: background .15s, color .15s;
+  }
+  .dialog .d-close:hover { background: var(--chip); color: var(--text); }
+  .dialog h3 { margin: 2px 44px 2px 0; font-size: 17px; }
+  .dialog .d-sub { color: var(--muted); font-size: 13px; margin-bottom: 6px; }
+  .chips { display: flex; flex-wrap: wrap; gap: 6px; margin: 12px 0 4px; }
+  .chip { background: var(--chip); border-radius: 999px; padding: 2px 11px; font-size: 12px; color: var(--text); }
+  .chip b { color: var(--accent); }
   .truncated {
     margin: 10px 0; padding: 8px 12px; border-radius: 8px; font-size: 12.5px;
-    background: var(--error-bg); color: var(--error);
+    background: var(--error-soft); color: var(--error);
   }
-  .page-sec { margin-top: 18px; border-top: 1px dashed var(--border); padding-top: 12px; }
+  .page-sec { margin-top: 18px; border-top: 1px dashed var(--border); padding-top: 13px; }
   .page-sec .p-head { font-weight: 600; font-size: 14px; margin-bottom: 6px; }
-  .page-sec .p-head .chip { margin-left: 6px; }
+  .page-sec .p-head .chip { margin-left: 8px; }
   .pre {
-    font: 12.5px/1.55 ui-monospace, SFMono-Regular, Consolas, "Courier New", monospace;
+    font: 12.5px/1.6 ui-monospace, SFMono-Regular, Consolas, "Courier New", monospace;
     background: var(--bg); border: 1px solid var(--border); border-radius: 8px;
     padding: 10px 12px; overflow-x: auto; white-space: pre-wrap; word-break: break-all;
     margin: 8px 0; color: var(--text);
@@ -139,38 +216,64 @@
   .pre .hunk { color: var(--faint); }
   .cellchange { margin: 8px 0; font-size: 13.5px; }
   .cellchange .where { color: var(--muted); font-size: 12.5px; }
-  .cellchange .old { background: var(--error-bg); color: var(--error); border-radius: 4px; padding: 1px 6px; text-decoration: line-through; }
-  .cellchange .new { background: var(--ok-bg); color: var(--ok); border-radius: 4px; padding: 1px 6px; }
+  .cellchange .old { background: var(--error-soft); color: var(--error); border-radius: 4px; padding: 1px 7px; text-decoration: line-through; }
+  .cellchange .new { background: var(--ok-soft); color: var(--ok); border-radius: 4px; padding: 1px 7px; }
   .dialog .d-foot { margin-top: 20px; font-size: 13px; color: var(--muted); }
 
-  footer { margin-top: 44px; color: var(--faint); font-size: 12.5px; text-align: center; }
+  footer { margin-top: 48px; padding-top: 16px; border-top: 1px solid var(--border); color: var(--faint); font-size: 12.5px; text-align: center; }
+
+  @media (max-width: 640px) {
+    .wrap { padding: 22px 14px 48px; }
+    .head-row { flex-direction: column; }
+    .head-right { flex-direction: row; align-items: center; }
+    h1 { font-size: 18px; }
+    .hero { padding: 16px; }
+    .chipm { padding: 3px 10px; }
+    .bar .seg { min-width: 3px; }
+    .dialog { padding: 18px 16px; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    * { animation: none !important; transition: none !important; }
+  }
 </style>
 </head>
 <body>
 <div class="wrap">
   <header>
-    <span class="refresh" id="refreshState"></span>
-    <h1>IDADM 官方文档更新监控</h1>
-    <div class="sub">监控 CUHK CDMP 发布的官方 PDF，区分「文件被替换」与「内容真实变化」</div>
+    <div class="head-row">
+      <div>
+        <h1 data-i18n="pageTitle">官方文档更新监控</h1>
+        <div class="sub" data-i18n="pageSubtitle">监控 CUHK CDMP 发布的官方 PDF，区分「文件被替换」与「内容真实变化」</div>
+      </div>
+      <div class="head-right">
+        <div class="lang-switch" role="group" aria-label="Language / 語言">
+          <button type="button" data-lang="zh-CN" class="active">简</button>
+          <button type="button" data-lang="zh-TW">繁</button>
+          <button type="button" data-lang="en">EN</button>
+        </div>
+        <span class="refresh" id="refreshState"></span>
+      </div>
+    </div>
   </header>
 
   <div class="hero" id="hero">
-    <div class="title"><span class="dot"></span><span id="heroTitle">加载中…</span></div>
-    <div class="desc" id="heroDesc"></div>
+    <div class="icon loading" id="heroIcon"></div>
+    <div class="hero-body">
+      <div class="title" id="heroTitle">加载中…</div>
+      <div class="desc" id="heroDesc"></div>
+    </div>
   </div>
 
   <div class="meta" id="meta"></div>
   <div class="notice" id="notice"></div>
 
-  <h2>监控文档</h2>
+  <h2 data-i18n="sectionDocs">监控文档</h2>
   <div id="docs"></div>
 
-  <h2>变更时间线</h2>
+  <h2 data-i18n="sectionTimeline">变更时间线</h2>
   <div id="timeline"></div>
 
-  <footer>
-    <div>本页面只读展示监控结果，不会触发新的检查 · 时间均为本地时区</div>
-  </footer>
+  <footer data-i18n="footer">本页面只读展示监控结果，不会触发新的检查 · 时间均为本地时区</footer>
 </div>
 
 <div class="overlay" id="overlay">
@@ -180,32 +283,208 @@
 <script>
 "use strict";
 
-var RETRY_MS = 60000;                   // 拉取失败后的重试间隔
+var RETRY_MINUTES = 1;                  // 拉取失败后的重试间隔（分钟）
 var REFRESH_MIN_MS = 60000;             // 自动刷新下限
 var REFRESH_MAX_MS = 24 * 3600 * 1000;  // 自动刷新上限：一天，避免相对时间标签长期不更新
-var OUTCOME_ZH = {
-  initialized: "建立基线",
-  not_modified: "未修改（304）",
-  unchanged: "无变化",
-  metadata_only: "仅元数据变化",
-  content_changed: "检测到内容更新",
-  error: "检查失败"
+var LANG_KEY = "updates_lang";
+
+var I18N = {
+  "zh-CN": {
+    pageTitle: "官方文档更新监控",
+    pageSubtitle: "监控 CUHK CDMP 发布的官方 PDF，区分「文件被替换」与「内容真实变化」",
+    loading: "加载中…",
+    noDocs: "暂无监控文档",
+    noDocsDesc: "配置文件 documents.yaml 中没有文档。",
+    heroOk: "官方文档无更新",
+    heroOkDesc: "{n} 份文档自建立基线以来内容无变化。",
+    heroChanged: "检测到官方文档更新",
+    heroChangedDesc: "最近一次：{time}（《{doc}》）· 共 {n} 份文档有内容变化。",
+    heroError: "监控检查失败",
+    heroErrorJoin: "；",
+    heroErrorItem: "《{doc}》连续失败 {n} 次",
+    metaLastCheck: "最后检查", metaNextCheck: "下次检查", metaInterval: "检查间隔", metaGenerated: "生成于",
+    notYet: "尚未检查", nextScheduled: "约 {time}", nextWaiting: "等待调度", schedOff: "调度器未启用",
+    sectionDocs: "监控文档", sectionTimeline: "变更时间线",
+    footer: "本页面只读展示监控结果，不会触发新的检查 · 时间均为本地时区",
+    badgeOk: "无更新", badgeChanged: "有更新", badgeError: "检查失败",
+    currentVersion: "当前版本：{time} 抓取 · {pages} 页 · {size} · {sha}",
+    notFetched: "尚未成功抓取过",
+    checksBarCount: "最近 {n} 次检查（左起最早）",
+    legendOk: "无变化", legendChanged: "内容更新", legendError: "检查失败",
+    checksEmpty: "尚无检查记录",
+    latestPrefix: "最近更新：", viewReport: "查看报告",
+    baselineNoChange: "自建立基线以来内容无变化",
+    timelineEmpty: "暂无变更记录——官方文档自监控上线以来没有内容变化。",
+    refreshOk: "已更新 · {time}",
+    loadFailed: "数据加载失败，将自动重试{extra}。",
+    lastSuccess: "（上次成功更新：{time}）",
+    outcome_initialized: "建立基线", outcome_not_modified: "未修改（304）", outcome_unchanged: "无变化",
+    outcome_metadata_only: "仅元数据变化", outcome_content_changed: "检测到内容更新", outcome_error: "检查失败",
+    sum_pages_changed: "页面修改", sum_pages_added: "新增页面", sum_pages_removed: "删除页面",
+    sum_text_lines_added: "新增文本行", sum_text_lines_removed: "删除文本行",
+    sum_tables_added: "新增表格", sum_tables_removed: "删除表格",
+    sum_rows_added: "新增行", sum_rows_removed: "删除行",
+    sum_table_cells_modified: "修改单元格", sum_table_cells_added: "新增单元格", sum_table_cells_removed: "删除单元格",
+    page_modified: "已修改", page_added: "新增", page_removed: "已删除",
+    detailDetectedAt: "检测于",
+    detailPage: "第 {n} 页", detailTable: "表格 {n}",
+    detailRowCol: "第 {row} 行 第 {col} 列：",
+    cellAdded: "新增单元格：", cellRemoved: "删除单元格：",
+    rowAdded: "新增一行：", rowRemoved: "删除一行：",
+    tableAdded: "整个表格新增", tableRemoved: "整个表格删除",
+    unifiedDiff: "Unified diff",
+    fullReport: "查看完整 Markdown 报告 ↗",
+    truncated: "差异过大已被截断，完整内容请查看 Markdown 报告。",
+    modalLoadFailed: "加载失败",
+    modalLoadFailedDesc: "{msg}，请稍后重试。",
+    close: "关闭",
+    units: ["秒", "分钟", "小时", "天"], suffixFuture: "后", suffixPast: "前",
+    ivUnits: ["天", "小时", "分钟"], ivUnitsSg: ["天", "小时", "分钟"]
+  },
+  "zh-TW": {
+    pageTitle: "官方文件更新監控",
+    pageSubtitle: "監控 CUHK CDMP 發布的官方 PDF，區分「文件被替換」與「內容真實變化」",
+    loading: "載入中…",
+    noDocs: "暫無監控文件",
+    noDocsDesc: "設定檔 documents.yaml 中沒有文件。",
+    heroOk: "官方文件無更新",
+    heroOkDesc: "{n} 份文件自建立基線以來內容無變化。",
+    heroChanged: "偵測到官方文件更新",
+    heroChangedDesc: "最近一次：{time}（《{doc}》）· 共 {n} 份文件有內容變化。",
+    heroError: "監控檢查失敗",
+    heroErrorJoin: "；",
+    heroErrorItem: "《{doc}》連續失敗 {n} 次",
+    metaLastCheck: "最後檢查", metaNextCheck: "下次檢查", metaInterval: "檢查間隔", metaGenerated: "生成於",
+    notYet: "尚未檢查", nextScheduled: "約 {time}", nextWaiting: "等待排程", schedOff: "排程器未啟用",
+    sectionDocs: "監控文件", sectionTimeline: "變更時間線",
+    footer: "本頁面唯讀顯示監控結果，不會觸發新的檢查 · 時間均為本地時區",
+    badgeOk: "無更新", badgeChanged: "有更新", badgeError: "檢查失敗",
+    currentVersion: "目前版本：{time} 擷取 · {pages} 頁 · {size} · {sha}",
+    notFetched: "尚未成功擷取過",
+    checksBarCount: "最近 {n} 次檢查（左起最早）",
+    legendOk: "無變化", legendChanged: "內容更新", legendError: "檢查失敗",
+    checksEmpty: "尚無檢查記錄",
+    latestPrefix: "最近更新：", viewReport: "檢視報告",
+    baselineNoChange: "自建立基線以來內容無變化",
+    timelineEmpty: "暫無變更記錄——官方文件自監控上線以來沒有內容變化。",
+    refreshOk: "已更新 · {time}",
+    loadFailed: "資料載入失敗，將自動重試{extra}。",
+    lastSuccess: "（上次成功更新：{time}）",
+    outcome_initialized: "建立基線", outcome_not_modified: "未修改（304）", outcome_unchanged: "無變化",
+    outcome_metadata_only: "僅中繼資料變化", outcome_content_changed: "偵測到內容更新", outcome_error: "檢查失敗",
+    sum_pages_changed: "頁面修改", sum_pages_added: "新增頁面", sum_pages_removed: "刪除頁面",
+    sum_text_lines_added: "新增文字行", sum_text_lines_removed: "刪除文字行",
+    sum_tables_added: "新增表格", sum_tables_removed: "刪除表格",
+    sum_rows_added: "新增列", sum_rows_removed: "刪除列",
+    sum_table_cells_modified: "修改儲存格", sum_table_cells_added: "新增儲存格", sum_table_cells_removed: "刪除儲存格",
+    page_modified: "已修改", page_added: "新增", page_removed: "已刪除",
+    detailDetectedAt: "偵測於",
+    detailPage: "第 {n} 頁", detailTable: "表格 {n}",
+    detailRowCol: "第 {row} 列 第 {col} 欄：",
+    cellAdded: "新增儲存格：", cellRemoved: "刪除儲存格：",
+    rowAdded: "新增一列：", rowRemoved: "刪除一列：",
+    tableAdded: "整個表格新增", tableRemoved: "整個表格刪除",
+    unifiedDiff: "Unified diff",
+    fullReport: "檢視完整 Markdown 報告 ↗",
+    truncated: "差異過大已被截斷，完整內容請檢視 Markdown 報告。",
+    modalLoadFailed: "載入失敗",
+    modalLoadFailedDesc: "{msg}，請稍後重試。",
+    close: "關閉",
+    units: ["秒", "分鐘", "小時", "天"], suffixFuture: "後", suffixPast: "前",
+    ivUnits: ["天", "小時", "分鐘"], ivUnitsSg: ["天", "小時", "分鐘"]
+  },
+  "en": {
+    pageTitle: "Official Document Update Monitor",
+    pageSubtitle: "Watching CUHK CDMP official PDFs — telling file replacements from real content changes",
+    loading: "Loading…",
+    noDocs: "No monitored documents",
+    noDocsDesc: "documents.yaml contains no entries.",
+    heroOk: "No official document updates",
+    heroOkDesc: "{n} document(s) unchanged since the baseline was established.",
+    heroChanged: "Official document update detected",
+    heroChangedDesc: "Latest: {time} (\"{doc}\") · {n} document(s) with content changes.",
+    heroError: "Monitoring check failed",
+    heroErrorJoin: "; ",
+    heroErrorItem: "\"{doc}\" failed {n} consecutive check(s)",
+    metaLastCheck: "Last check", metaNextCheck: "Next check", metaInterval: "Interval", metaGenerated: "Generated",
+    notYet: "not yet", nextScheduled: "~{time}", nextWaiting: "waiting for schedule", schedOff: "scheduler disabled",
+    sectionDocs: "Monitored documents", sectionTimeline: "Change timeline",
+    footer: "Read-only view of monitoring results; never triggers new checks · times shown in your local timezone",
+    badgeOk: "No change", badgeChanged: "Updated", badgeError: "Check failed",
+    currentVersion: "Current version: fetched {time} · {pages} pages · {size} · {sha}",
+    notFetched: "No successful fetch yet",
+    checksBarCount: "Last {n} checks (oldest first)",
+    legendOk: "no change", legendChanged: "content update", legendError: "check failed",
+    checksEmpty: "No checks recorded yet",
+    latestPrefix: "Latest change:", viewReport: "View report",
+    baselineNoChange: "No content changes since the baseline",
+    timelineEmpty: "No changes recorded — the official documents have not changed since monitoring started.",
+    refreshOk: "Updated · {time}",
+    loadFailed: "Failed to load data; retrying automatically{extra}.",
+    lastSuccess: " (last success: {time})",
+    outcome_initialized: "baseline established", outcome_not_modified: "not modified (304)", outcome_unchanged: "unchanged",
+    outcome_metadata_only: "metadata only", outcome_content_changed: "content update detected", outcome_error: "check failed",
+    sum_pages_changed: "pages modified", sum_pages_added: "pages added", sum_pages_removed: "pages removed",
+    sum_text_lines_added: "lines added", sum_text_lines_removed: "lines removed",
+    sum_tables_added: "tables added", sum_tables_removed: "tables removed",
+    sum_rows_added: "rows added", sum_rows_removed: "rows removed",
+    sum_table_cells_modified: "cells modified", sum_table_cells_added: "cells added", sum_table_cells_removed: "cells removed",
+    page_modified: "modified", page_added: "added", page_removed: "removed",
+    detailDetectedAt: "detected",
+    detailPage: "Page {n}", detailTable: "Table {n}",
+    detailRowCol: "row {row}, col {col}: ",
+    cellAdded: "cell added: ", cellRemoved: "cell removed: ",
+    rowAdded: "row added: ", rowRemoved: "row removed: ",
+    tableAdded: "table added", tableRemoved: "table removed",
+    unifiedDiff: "Unified diff",
+    fullReport: "View full Markdown report ↗",
+    truncated: "The diff was truncated; see the Markdown report for the full content.",
+    modalLoadFailed: "Failed to load",
+    modalLoadFailedDesc: "{msg}. Please try again later.",
+    close: "Close",
+    units: ["seconds", "minutes", "hours", "days"], suffixFuture: "", suffixPast: "",
+    ivUnits: ["days", "hours", "minutes"], ivUnitsSg: ["day", "hour", "minute"]
+  }
 };
-var SUMMARY_ZH = [
-  ["pages_changed", "页面修改"], ["pages_added", "新增页面"], ["pages_removed", "删除页面"],
-  ["text_lines_added", "新增文本行"], ["text_lines_removed", "删除文本行"],
-  ["tables_added", "新增表格"], ["tables_removed", "删除表格"],
-  ["rows_added", "新增行"], ["rows_removed", "删除行"],
-  ["table_cells_modified", "修改单元格"], ["table_cells_added", "新增单元格"],
-  ["table_cells_removed", "删除单元格"]
+
+var SUMMARY_KEYS = [
+  ["pages_changed", "sum_pages_changed"], ["pages_added", "sum_pages_added"], ["pages_removed", "sum_pages_removed"],
+  ["text_lines_added", "sum_text_lines_added"], ["text_lines_removed", "sum_text_lines_removed"],
+  ["tables_added", "sum_tables_added"], ["tables_removed", "sum_tables_removed"],
+  ["rows_added", "sum_rows_added"], ["rows_removed", "sum_rows_removed"],
+  ["table_cells_modified", "sum_table_cells_modified"], ["table_cells_added", "sum_table_cells_added"],
+  ["table_cells_removed", "sum_table_cells_removed"]
 ];
-var PAGE_STATUS_ZH = { modified: "已修改", added: "新增", removed: "已删除" };
+
+var ICONS = {
+  loading: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 3"/></svg>',
+  ok: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M8.5 12.3l2.4 2.4 4.6-5"/></svg>',
+  changed: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-2.64-6.36"/><path d="M21 3v6h-6"/></svg>',
+  error: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3 2.5 20h19L12 3z"/><path d="M12 10v4.5"/><path d="M12 17.6v.1"/></svg>'
+};
+
+var currentLang = "zh-CN";
+var lastData = null;
+var lastSuccessAt = null;
 
 function $(id) { return document.getElementById(id); }
 function esc(s) {
   return String(s == null ? "" : s).replace(/[&<>"']/g, function (c) {
     return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c];
   });
+}
+function t(key, params) {
+  var text = I18N[currentLang] && I18N[currentLang][key];
+  if (text == null) text = I18N["zh-CN"][key];
+  if (text == null) text = key;
+  if (params) {
+    for (var p in params) {
+      if (Object.prototype.hasOwnProperty.call(params, p)) {
+        text = text.split("{" + p + "}").join(String(params[p]));
+      }
+    }
+  }
+  return text;
 }
 function pad(n) { return n < 10 ? "0" + n : "" + n; }
 function fmtAbs(iso) {
@@ -219,13 +498,17 @@ function relTime(iso, now) {
   var diff = (new Date(iso).getTime() - (now || Date.now())) / 1000;
   var future = diff > 0;
   diff = Math.abs(diff);
-  var text;
-  if (diff < 60) text = Math.round(diff) + " 秒";
-  else if (diff < 3600) text = Math.round(diff / 60) + " 分钟";
-  else if (diff < 86400) text = Math.round(diff / 3600) + " 小时";
-  else if (diff < 86400 * 30) text = Math.round(diff / 86400) + " 天";
+  var units = I18N[currentLang].units;
+  var value, unit;
+  if (diff < 60) { value = Math.round(diff); unit = units[0]; }
+  else if (diff < 3600) { value = Math.round(diff / 60); unit = units[1]; }
+  else if (diff < 86400) { value = Math.round(diff / 3600); unit = units[2]; }
+  else if (diff < 86400 * 30) { value = Math.round(diff / 86400); unit = units[3]; }
   else return fmtAbs(iso);
-  return text + (future ? "后" : "前");
+  if (currentLang === "en") {
+    return future ? "in " + value + " " + unit : value + " " + unit + " ago";
+  }
+  return value + " " + unit + (future ? t("suffixFuture") : t("suffixPast"));
 }
 function fmtBytes(n) {
   if (n == null) return "—";
@@ -240,37 +523,95 @@ function fmtDuration(ms) {
 }
 function fmtInterval(minutes) {
   if (minutes == null) return "—";
-  if (minutes % 1440 === 0) return (minutes / 1440) + " 天";
-  if (minutes % 60 === 0) return (minutes / 60) + " 小时";
-  return minutes + " 分钟";
+  var sg = currentLang === "en";
+  var units = sg ? I18N.en.ivUnitsSg : I18N[currentLang].ivUnits;
+  if (minutes % 1440 === 0) {
+    var d = minutes / 1440;
+    return sg && d === 1 ? "1 day" : d + " " + units[0];
+  }
+  if (minutes % 60 === 0) {
+    var h = minutes / 60;
+    return sg && h === 1 ? "1 hour" : h + " " + units[1];
+  }
+  return minutes + " " + units[2];
 }
 function segClass(outcome) {
   if (outcome === "content_changed") return "changed";
   if (outcome === "error") return "error";
   return "ok";
 }
-
-var lastSuccessAt = null;
+function detectLang() {
+  var saved = null;
+  try { saved = window.localStorage.getItem(LANG_KEY); } catch (e) { saved = null; }
+  if (saved && I18N[saved]) return saved;
+  var langs = (navigator.languages && navigator.languages.length)
+    ? navigator.languages
+    : [navigator.language || "zh-CN"];
+  for (var i = 0; i < langs.length; i++) {
+    var l = String(langs[i] || "").toLowerCase();
+    if (l.indexOf("zh") === 0) {
+      if (l.indexOf("hant") >= 0 || l.indexOf("-tw") >= 0 || l.indexOf("-hk") >= 0 || l.indexOf("-mo") >= 0) {
+        return "zh-TW";
+      }
+      return "zh-CN";
+    }
+    if (l.indexOf("en") === 0) return "en";
+  }
+  return "zh-CN";
+}
+function applyStaticLang() {
+  document.documentElement.lang = currentLang;
+  document.title = t("pageTitle");
+  var nodes = document.querySelectorAll("[data-i18n]");
+  for (var i = 0; i < nodes.length; i++) {
+    nodes[i].textContent = t(nodes[i].getAttribute("data-i18n"));
+  }
+  var buttons = document.querySelectorAll(".lang-switch button");
+  for (var j = 0; j < buttons.length; j++) {
+    buttons[j].classList.toggle("active", buttons[j].getAttribute("data-lang") === currentLang);
+  }
+}
+function setLang(lang) {
+  if (!I18N[lang]) return;
+  currentLang = lang;
+  try { window.localStorage.setItem(LANG_KEY, lang); } catch (e) {}
+  applyStaticLang();
+  if (!lastData) {
+    $("heroTitle").textContent = t("loading");
+    $("heroDesc").textContent = "";
+    $("heroIcon").innerHTML = ICONS.loading;
+    $("hero").className = "hero";
+    $("meta").innerHTML = "";
+  } else {
+    renderHero(lastData);
+    renderMeta(lastData);
+    renderDocs(lastData);
+    renderTimeline(lastData);
+  }
+  renderRefreshState();
+}
 
 function renderHero(data) {
   var docs = data.documents || [];
-  var failing = docs.filter(function (d) { return d.monitor.consecutive_failures > 0; });
-  var withChange = docs.filter(function (d) { return d.latest_change; });
   var hero = $("hero");
-  var title = $("heroTitle"), desc = $("heroDesc");
+  var title = $("heroTitle"), desc = $("heroDesc"), icon = $("heroIcon");
 
   if (!docs.length) {
     hero.className = "hero";
-    title.textContent = "暂无监控文档";
-    desc.textContent = "配置文件 documents.yaml 中没有文档。";
+    icon.innerHTML = ICONS.loading;
+    title.textContent = t("noDocs");
+    desc.textContent = t("noDocsDesc");
     return;
   }
+  var failing = docs.filter(function (d) { return d.monitor.consecutive_failures > 0; });
+  var withChange = docs.filter(function (d) { return d.latest_change; });
   if (failing.length) {
     hero.className = "hero error";
-    title.textContent = "监控检查失败";
+    icon.innerHTML = ICONS.error;
+    title.textContent = t("heroError");
     desc.textContent = failing.map(function (d) {
-      return "《" + d.title + "》连续失败 " + d.monitor.consecutive_failures + " 次";
-    }).join("；") + "。";
+      return t("heroErrorItem", { doc: d.title, n: d.monitor.consecutive_failures });
+    }).join(t("heroErrorJoin"));
     return;
   }
   if (withChange.length) {
@@ -278,30 +619,44 @@ function renderHero(data) {
       return new Date(b.latest_change.detected_at) - new Date(a.latest_change.detected_at);
     })[0];
     hero.className = "hero changed";
-    title.textContent = "检测到官方文档更新";
-    desc.textContent = "最近一次：" + relTime(latest.latest_change.detected_at) +
-      "（《" + latest.title + "》）· 共 " + withChange.length + " 份文档有内容变化。";
+    icon.innerHTML = ICONS.changed;
+    title.textContent = t("heroChanged");
+    desc.textContent = t("heroChangedDesc", {
+      time: relTime(latest.latest_change.detected_at),
+      doc: latest.title,
+      n: withChange.length
+    });
     return;
   }
   hero.className = "hero";
-  title.textContent = "官方文档无更新";
-  desc.textContent = docs.length + " 份文档自建立基线以来内容无变化。";
+  icon.innerHTML = ICONS.ok;
+  title.textContent = t("heroOk");
+  desc.textContent = t("heroOkDesc", { n: docs.length });
 }
 
 function renderMeta(data) {
   var docs = data.documents || [];
   var lastChecked = null;
   docs.forEach(function (d) {
-    var t = d.monitor.last_checked_at;
-    if (t && (!lastChecked || t > lastChecked)) lastChecked = t;
+    var ts = d.monitor.last_checked_at;
+    if (ts && (!lastChecked || ts > lastChecked)) lastChecked = ts;
   });
   var s = data.scheduler || {};
-  var next = s.enabled ? (s.next_run_at ? "约 " + relTime(s.next_run_at) : "等待调度") : "调度器未启用";
+  var next = s.enabled
+    ? (s.next_run_at ? t("nextScheduled", { time: relTime(s.next_run_at) }) : t("nextWaiting"))
+    : t("schedOff");
+  function chip(label, value) {
+    return '<span class="chipm"><span>' + esc(label) + '</span><b>' + esc(value) + "</b></span>";
+  }
   $("meta").innerHTML =
-    "<span>最后检查 <b>" + (lastChecked ? relTime(lastChecked) : "尚未检查") + "</b></span>" +
-    "<span>下次检查 <b>" + esc(next) + "</b></span>" +
-    "<span>检查间隔 <b>" + esc(fmtInterval(s.interval_minutes)) + "</b></span>" +
-    "<span>生成于 <b>" + esc(fmtAbs(data.generated_at)) + "</b></span>";
+    chip(t("metaLastCheck"), lastChecked ? relTime(lastChecked) : t("notYet")) +
+    chip(t("metaNextCheck"), next) +
+    chip(t("metaInterval"), fmtInterval(s.interval_minutes)) +
+    chip(t("metaGenerated"), fmtAbs(data.generated_at));
+}
+
+function legendItem(cls, label) {
+  return '<span class="lg"><i class="lg-dot ' + cls + '"></i>' + esc(label) + "</span>";
 }
 
 function renderDocs(data) {
@@ -309,50 +664,55 @@ function renderDocs(data) {
   host.innerHTML = (data.documents || []).map(function (d) {
     var failing = d.monitor.consecutive_failures > 0;
     var changed = !!d.latest_change;
-    var badge = failing
-      ? '<span class="badge error">检查失败</span>'
-      : changed
-        ? '<span class="badge changed">有更新</span>'
-        : '<span class="badge ok">无更新</span>';
+    var badgeClass = failing ? "error" : (changed ? "changed" : "ok");
+    var badgeLabel = failing ? t("badgeError") : (changed ? t("badgeChanged") : t("badgeOk"));
 
     var errbox = failing && d.monitor.last_error
       ? '<div class="errbox">' + esc(d.monitor.last_error) + "</div>" : "";
 
     var v = d.current_version;
     var ver = v
-      ? "当前版本：" + esc(fmtAbs(v.fetched_at)) + " 抓取 · " + esc(v.page_count) + " 页 · " +
-        esc(fmtBytes(v.size_bytes)) + " · " + esc(String(v.sha256 || "").slice(0, 8))
-      : "尚未成功抓取过";
+      ? t("currentVersion", {
+          time: fmtAbs(v.fetched_at), pages: v.page_count,
+          size: fmtBytes(v.size_bytes), sha: String(v.sha256 || "").slice(0, 8)
+        })
+      : t("notFetched");
 
     var checks = d.checks || [];
-    var bar, barLabel;
+    var bar, foot;
     if (checks.length) {
       bar = '<div class="bar">' + checks.map(function (c) {
-        var tip = fmtAbs(c.checked_at) + " · " +
-          (OUTCOME_ZH[c.outcome] || c.outcome) +
+        var tip = fmtAbs(c.checked_at) + " · " + t("outcome_" + c.outcome) +
           " · HTTP " + (c.http_status == null ? "—" : c.http_status) +
           " · " + fmtDuration(c.duration_ms);
         return '<div class="seg ' + segClass(c.outcome) + '" title="' + esc(tip) + '"></div>';
       }).join("") + "</div>";
-      barLabel = '<div class="bar-label">最近 ' + checks.length + " 次检查（左起最早）· 绿=无变化，蓝=检测到内容更新，红=检查失败</div>";
+      foot = '<div class="bar-foot"><span>' + esc(t("checksBarCount", { n: checks.length })) + "</span>" +
+        '<span class="legend">' +
+        legendItem("ok", t("legendOk")) +
+        legendItem("changed", t("legendChanged")) +
+        legendItem("error", t("legendError")) +
+        "</span></div>";
     } else {
       bar = "";
-      barLabel = '<div class="bar-label">尚无检查记录</div>';
+      foot = '<div class="bar-foot"><span>' + esc(t("checksEmpty")) + "</span></div>";
     }
 
     var latest;
     if (d.latest_change) {
-      latest = '<div class="latest">最近更新：<b>' + esc(relTime(d.latest_change.detected_at)) +
-        "</b> · " + esc(d.latest_change.headline) +
-        ' <button class="link" onclick="openDetail(' + d.latest_change.id + ')">查看报告</button></div>';
+      latest = '<div class="latest">' + esc(t("latestPrefix")) + "<b>" +
+        esc(relTime(d.latest_change.detected_at)) + "</b> · " + esc(d.latest_change.headline) +
+        ' <button type="button" class="link" onclick="openDetail(' + d.latest_change.id + ')">' +
+        esc(t("viewReport")) + "</button></div>";
     } else {
-      latest = '<div class="latest muted">自建立基线以来内容无变化</div>';
+      latest = '<div class="latest muted">' + esc(t("baselineNoChange")) + "</div>";
     }
 
     return '<div class="card">' +
       '<div class="head"><span class="title"><a href="' + esc(d.url) + '" target="_blank" rel="noopener">' +
-      esc(d.title) + "</a></span>" + badge + "</div>" +
-      '<div class="ver">' + esc(ver) + "</div>" + errbox + bar + barLabel + latest +
+      esc(d.title) + "</a></span>" +
+      '<span class="badge ' + badgeClass + '">' + esc(badgeLabel) + "</span></div>" +
+      '<div class="ver">' + esc(ver) + "</div>" + errbox + bar + foot + latest +
       "</div>";
   }).join("");
 }
@@ -361,7 +721,7 @@ function renderTimeline(data) {
   var host = $("timeline");
   var items = data.recent_changes || [];
   if (!items.length) {
-    host.innerHTML = '<div class="empty">暂无变更记录——官方文档自监控上线以来没有内容变化。</div>';
+    host.innerHTML = '<div class="empty">' + esc(t("timelineEmpty")) + "</div>";
     return;
   }
   host.innerHTML = items.map(function (c) {
@@ -375,8 +735,10 @@ function renderTimeline(data) {
 }
 
 function renderSummaryChips(summary) {
-  var chips = SUMMARY_ZH.filter(function (pair) { return (summary[pair[0]] || 0) > 0; })
-    .map(function (pair) { return '<span class="chip">' + pair[1] + ' <b>' + summary[pair[0]] + "</b></span>"; });
+  var chips = SUMMARY_KEYS.filter(function (pair) { return (summary[pair[0]] || 0) > 0; })
+    .map(function (pair) {
+      return '<span class="chip">' + esc(t(pair[1])) + " <b>" + summary[pair[0]] + "</b></span>";
+    });
   return chips.length ? '<div class="chips">' + chips.join("") + "</div>" : "";
 }
 
@@ -396,28 +758,30 @@ function renderLineChanges(page) {
 function renderTableChanges(page) {
   var html = "";
   (page.table_changes || []).forEach(function (tc) {
-    var where = "表格 " + ((tc.table_index == null ? 1 : tc.table_index + 1));
+    var where = t("detailTable", { n: tc.table_index == null ? 1 : tc.table_index + 1 });
     if (tc.type === "cell_modified") {
-      html += '<div class="cellchange"><span class="where">' + where + " · 第 " +
-        ((tc.old_row == null ? "?" : tc.old_row + 1)) + " 行 第 " +
-        ((tc.column == null ? "?" : tc.column + 1)) + " 列：</span>" +
+      html += '<div class="cellchange"><span class="where">' + esc(where) + " · " +
+        esc(t("detailRowCol", {
+          row: tc.old_row == null ? "?" : tc.old_row + 1,
+          col: tc.column == null ? "?" : tc.column + 1
+        })) + "</span>" +
         '<span class="old">' + esc(tc.old) + '</span> → <span class="new">' + esc(tc.new) + "</span>" +
-        (tc.row_context ? ' <div class="pre">' + esc(tc.row_context) + "</div>" : "") +
+        (tc.row_context ? '<div class="pre">' + esc(tc.row_context) + "</div>" : "") +
         "</div>";
     } else if (tc.type === "cell_added" || tc.type === "cell_removed") {
-      var label = tc.type === "cell_added" ? "新增单元格" : "删除单元格";
-      html += '<div class="cellchange"><span class="where">' + where + " · " + label +
-        '：</span><span class="' + (tc.type === "cell_added" ? "new" : "old") + '">' +
+      html += '<div class="cellchange"><span class="where">' + esc(where) + " · " +
+        esc(t(tc.type === "cell_added" ? "cellAdded" : "cellRemoved")) + "</span>" +
+        '<span class="' + (tc.type === "cell_added" ? "new" : "old") + '">' +
         esc(tc.new != null ? tc.new : tc.old) + "</span>" +
-        (tc.row_context ? ' <div class="pre">' + esc(tc.row_context) + "</div>" : "") +
+        (tc.row_context ? '<div class="pre">' + esc(tc.row_context) + "</div>" : "") +
         "</div>";
     } else if (tc.type === "row_added" || tc.type === "row_removed") {
-      html += '<div class="cellchange"><span class="where">' + where + " · " +
-        (tc.type === "row_added" ? "新增一行" : "删除一行") + "：</span>" +
+      html += '<div class="cellchange"><span class="where">' + esc(where) + " · " +
+        esc(t(tc.type === "row_added" ? "rowAdded" : "rowRemoved")) + "</span>" +
         (tc.row_context ? '<div class="pre">' + esc(tc.row_context) + "</div>" : "") + "</div>";
     } else if (tc.type === "table_added" || tc.type === "table_removed") {
-      html += '<div class="cellchange"><span class="where">' + where + " · " +
-        (tc.type === "table_added" ? "整个表格新增" : "整个表格删除") + "</span></div>";
+      html += '<div class="cellchange"><span class="where">' + esc(where) + " · " +
+        esc(t(tc.type === "table_added" ? "tableAdded" : "tableRemoved")) + "</span></div>";
     }
   });
   return html;
@@ -427,9 +791,9 @@ function renderUnifiedDiff(text) {
   if (!text) return "";
   var html = text.split("\n").map(function (line) {
     var cls = "";
-    if (line.startsWith("+")) cls = "add";
-    else if (line.startsWith("-")) cls = "del";
-    else if (line.startsWith("@@")) cls = "hunk";
+    if (line.charAt(0) === "+") cls = "add";
+    else if (line.charAt(0) === "-") cls = "del";
+    else if (line.indexOf("@@") === 0) cls = "hunk";
     return cls ? '<span class="' + cls + '">' + esc(line) + "</span>" : esc(line);
   }).join("\n");
   return '<div class="pre">' + html + "</div>";
@@ -437,25 +801,27 @@ function renderUnifiedDiff(text) {
 
 function renderDetail(detail) {
   var pages = (detail.diff && detail.diff.pages) || [];
-  var html = '<button class="d-close" onclick="closeDetail()" title="关闭">×</button>' +
+  var html = '<button type="button" class="d-close" onclick="closeDetail()" title="' +
+    esc(t("close")) + '">✕</button>' +
     "<h3>" + esc(detail.headline) + "</h3>" +
-    '<div class="d-sub">《' + esc(detail.document_title) + "》· 检测于 " +
+    '<div class="d-sub">' + esc(detail.document_title) + " · " + esc(t("detailDetectedAt")) + " " +
     esc(fmtAbs(detail.detected_at)) + "（" + esc(relTime(detail.detected_at)) + "）</div>" +
     renderSummaryChips(detail.summary || {});
   if (detail.truncated) {
-    html += '<div class="truncated">差异过大已被截断，完整内容请查看 Markdown 报告。</div>';
+    html += '<div class="truncated">' + esc(t("truncated")) + "</div>";
   }
   pages.forEach(function (p) {
     var pageNo = p.new_page != null ? p.new_page : p.old_page;
-    html += '<div class="page-sec"><div class="p-head">第 ' + esc(pageNo) + " 页" +
-      '<span class="chip">' + esc(PAGE_STATUS_ZH[p.status] || p.status) + "</span></div>" +
+    html += '<div class="page-sec"><div class="p-head">' + esc(t("detailPage", { n: pageNo })) +
+      '<span class="chip">' + esc(t("page_" + p.status)) + "</span></div>" +
       renderTableChanges(p) + renderLineChanges(p) + "</div>";
   });
   if (detail.unified_diff) {
-    html += '<div class="page-sec"><div class="p-head">Unified diff</div>' +
+    html += '<div class="page-sec"><div class="p-head">' + esc(t("unifiedDiff")) + "</div>" +
       renderUnifiedDiff(detail.unified_diff) + "</div>";
   }
-  html += '<div class="d-foot"><a href="' + esc(detail.markdown_url) + '" target="_blank" rel="noopener">查看完整 Markdown 报告 ↗</a></div>';
+  html += '<div class="d-foot"><a href="' + esc(detail.markdown_url) + '" target="_blank" rel="noopener">' +
+    esc(t("fullReport")) + "</a></div>";
   return html;
 }
 
@@ -472,9 +838,10 @@ function openDetail(changeId) {
     })
     .catch(function (err) {
       $("dialog").innerHTML =
-        '<button class="d-close" onclick="closeDetail()" title="关闭">×</button>' +
-        "<h3>加载失败</h3>" +
-        '<div class="d-sub">' + esc(err.message) + "，请稍后重试。</div>";
+        '<button type="button" class="d-close" onclick="closeDetail()" title="' +
+        esc(t("close")) + '">✕</button>' +
+        "<h3>" + esc(t("modalLoadFailed")) + "</h3>" +
+        '<div class="d-sub">' + esc(t("modalLoadFailedDesc", { msg: err.message })) + "</div>";
       $("overlay").classList.add("open");
     });
 }
@@ -504,6 +871,7 @@ function loadData() {
       return r.json();
     })
     .then(function (data) {
+      lastData = data;
       lastSuccessAt = Date.now();
       $("notice").style.display = "none";
       renderHero(data);
@@ -515,18 +883,30 @@ function loadData() {
     .catch(function () {
       var box = $("notice");
       box.style.display = "block";
-      box.textContent = "数据加载失败，将自动重试" +
-        (lastSuccessAt ? "（上次成功更新：" + relTime(new Date(lastSuccessAt).toISOString()) + "）" : "") + "。";
-      scheduleRefresh(1);
+      box.textContent = t("loadFailed", {
+        extra: lastSuccessAt ? t("lastSuccess", { time: relTime(new Date(lastSuccessAt).toISOString()) }) : ""
+      });
+      scheduleRefresh(RETRY_MINUTES);
     });
 }
 function renderRefreshState() {
   if (!lastSuccessAt) return;
-  $("refreshState").textContent = "已更新 · " + relTime(new Date(lastSuccessAt).toISOString());
+  $("refreshState").textContent = t("refreshOk", { time: relTime(new Date(lastSuccessAt).toISOString()) });
 }
 window.openDetail = openDetail;
 window.closeDetail = closeDetail;
-loadData();
+
+(function boot() {
+  var buttons = document.querySelectorAll(".lang-switch button");
+  for (var i = 0; i < buttons.length; i++) {
+    buttons[i].addEventListener("click", function () {
+      setLang(this.getAttribute("data-lang"));
+    });
+  }
+  currentLang = detectLang();
+  setLang(currentLang);
+  loadData();
+})();
 setInterval(renderRefreshState, 5000);
 document.addEventListener("visibilitychange", function () {
   if (!document.hidden) loadData();

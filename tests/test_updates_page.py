@@ -42,6 +42,10 @@ def test_updates_page_served(client: TestClient) -> None:
     assert response.status_code == 200
     assert response.headers["content-type"].startswith("text/html")
     assert "官方文档更新监控" in response.text
+    # Trilingual i18n assets: dictionaries, switcher buttons and static hooks.
+    for marker in ('data-lang="zh-CN"', 'data-lang="zh-TW"', 'data-lang="en"',
+                   "data-i18n", "navigator.languages"):
+        assert marker in response.text, marker
 
 
 def test_updates_page_end_to_end(
