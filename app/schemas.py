@@ -83,6 +83,11 @@ class ChangeList(BaseModel):
     changes: list[ChangeSummary]
 
 
+class CheckList(BaseModel):
+    document_key: str
+    checks: list[CheckInfo]
+
+
 class ChangeDetail(BaseModel):
     id: int
     document_key: str

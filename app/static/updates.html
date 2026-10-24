@@ -1,0 +1,536 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>IDADM 官方文档更新监控</title>
+<style>
+  :root {
+    --bg: #f5f7fa; --card: #ffffff; --border: #e5e7eb;
+    --text: #1f2937; --muted: #6b7280; --faint: #9ca3af;
+    --ok: #16a34a; --ok-bg: rgba(22, 163, 74, 0.10);
+    --changed: #2563eb; --changed-bg: rgba(37, 99, 235, 0.10);
+    --error: #dc2626; --error-bg: rgba(220, 38, 38, 0.10);
+    --chip: #eef2f7; --shadow: 0 1px 3px rgba(0,0,0,0.06);
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #0f172a; --card: #1e293b; --border: #334155;
+      --text: #e2e8f0; --muted: #94a3b8; --faint: #64748b;
+      --ok: #4ade80; --ok-bg: rgba(74, 222, 128, 0.12);
+      --changed: #60a5fa; --changed-bg: rgba(96, 165, 250, 0.12);
+      --error: #f87171; --error-bg: rgba(248, 113, 113, 0.12);
+      --chip: #2b3a52; --shadow: 0 1px 3px rgba(0,0,0,0.4);
+    }
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; background: var(--bg); color: var(--text);
+    font: 15px/1.6 system-ui, -apple-system, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
+  }
+  .wrap { max-width: 880px; margin: 0 auto; padding: 28px 20px 60px; }
+  a { color: var(--changed); text-decoration: none; }
+  a:hover { text-decoration: underline; }
+
+  header h1 { margin: 0 0 4px; font-size: 22px; }
+  header .sub { color: var(--muted); font-size: 13px; }
+  header .refresh { float: right; color: var(--faint); font-size: 12px; margin-top: 6px; }
+
+  .hero {
+    margin: 22px 0 10px; padding: 18px 20px; border-radius: 12px;
+    background: var(--card); border: 1px solid var(--border);
+    border-left: 5px solid var(--ok); box-shadow: var(--shadow);
+  }
+  .hero.changed { border-left-color: var(--changed); }
+  .hero.error   { border-left-color: var(--error); }
+  .hero .title { font-size: 19px; font-weight: 600; display: flex; align-items: center; gap: 10px; }
+  .hero .title .dot { width: 11px; height: 11px; border-radius: 50%; background: var(--ok); flex: none; }
+  .hero.changed .title .dot { background: var(--changed); }
+  .hero.error   .title .dot { background: var(--error); }
+  .hero .desc { color: var(--muted); font-size: 13.5px; margin-top: 4px; }
+
+  .meta { display: flex; flex-wrap: wrap; gap: 8px 26px; color: var(--muted); font-size: 13px; margin: 0 0 26px; }
+  .meta b { color: var(--text); font-weight: 600; }
+
+  .notice {
+    display: none; margin: 0 0 18px; padding: 10px 14px; border-radius: 8px;
+    background: var(--error-bg); color: var(--error); font-size: 13.5px;
+  }
+
+  h2 { font-size: 15px; margin: 30px 0 12px; color: var(--text); }
+
+  .card {
+    background: var(--card); border: 1px solid var(--border); border-radius: 12px;
+    padding: 18px 20px; margin-bottom: 16px; box-shadow: var(--shadow);
+  }
+  .card .head { display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; }
+  .card .head .title { font-size: 16px; font-weight: 600; }
+  .badge {
+    margin-left: auto; font-size: 12px; font-weight: 600; padding: 2px 10px;
+    border-radius: 999px; white-space: nowrap;
+  }
+  .badge.ok { background: var(--ok-bg); color: var(--ok); }
+  .badge.changed { background: var(--changed-bg); color: var(--changed); }
+  .badge.error { background: var(--error-bg); color: var(--error); }
+  .card .ver { color: var(--muted); font-size: 13px; margin-top: 6px; }
+  .card .errbox {
+    margin-top: 10px; padding: 8px 12px; border-radius: 8px; font-size: 13px;
+    background: var(--error-bg); color: var(--error); word-break: break-all;
+  }
+  .bar { display: flex; gap: 2px; margin-top: 14px; }
+  .bar .seg { flex: 1 1 0; min-width: 5px; height: 30px; border-radius: 3px; background: var(--ok-bg); }
+  .bar .seg.ok { background: var(--ok); opacity: 0.55; }
+  .bar .seg.ok:hover { opacity: 1; }
+  .bar .seg.changed { background: var(--changed); }
+  .bar .seg.error { background: var(--error); }
+  .bar-label { color: var(--faint); font-size: 12px; margin-top: 4px; }
+  .latest { margin-top: 12px; font-size: 13.5px; }
+  .latest .muted { color: var(--muted); }
+  button.link {
+    background: none; border: 1px solid var(--border); color: var(--changed);
+    border-radius: 6px; padding: 2px 10px; font-size: 12.5px; cursor: pointer;
+  }
+  button.link:hover { background: var(--changed-bg); }
+
+  .timeline-item {
+    display: flex; gap: 12px; align-items: baseline; padding: 10px 4px;
+    border-bottom: 1px solid var(--border); cursor: pointer;
+  }
+  .timeline-item:hover { background: var(--card); }
+  .timeline-item:last-child { border-bottom: none; }
+  .timeline-item .t-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--changed); flex: none; position: relative; top: -1px; }
+  .timeline-item .t-body { flex: 1; min-width: 0; }
+  .timeline-item .t-title { font-size: 14px; }
+  .timeline-item .t-title .doc { color: var(--muted); font-size: 12.5px; margin-right: 8px; }
+  .timeline-item .t-time { color: var(--faint); font-size: 12.5px; white-space: nowrap; }
+  .empty { color: var(--muted); font-size: 13.5px; padding: 14px 4px; }
+
+  .overlay {
+    display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.55);
+    z-index: 40; padding: 24px;
+  }
+  .overlay.open { display: flex; align-items: flex-start; justify-content: center; }
+  .dialog {
+    background: var(--card); border: 1px solid var(--border); border-radius: 12px;
+    max-width: 880px; width: 100%; max-height: calc(100vh - 48px); overflow: auto;
+    padding: 22px 26px; box-shadow: 0 10px 40px rgba(0,0,0,0.25);
+  }
+  .dialog .d-close { float: right; background: none; border: none; color: var(--muted); font-size: 20px; cursor: pointer; line-height: 1; }
+  .dialog h3 { margin: 0 40px 2px 0; font-size: 16.5px; }
+  .dialog .d-sub { color: var(--muted); font-size: 13px; margin-bottom: 14px; }
+  .chips { display: flex; flex-wrap: wrap; gap: 6px; margin: 10px 0 4px; }
+  .chip { background: var(--chip); border-radius: 999px; padding: 2px 10px; font-size: 12px; color: var(--text); }
+  .chip b { color: var(--changed); }
+  .truncated {
+    margin: 10px 0; padding: 8px 12px; border-radius: 8px; font-size: 12.5px;
+    background: var(--error-bg); color: var(--error);
+  }
+  .page-sec { margin-top: 18px; border-top: 1px dashed var(--border); padding-top: 12px; }
+  .page-sec .p-head { font-weight: 600; font-size: 14px; margin-bottom: 6px; }
+  .page-sec .p-head .chip { margin-left: 6px; }
+  .pre {
+    font: 12.5px/1.55 ui-monospace, SFMono-Regular, Consolas, "Courier New", monospace;
+    background: var(--bg); border: 1px solid var(--border); border-radius: 8px;
+    padding: 10px 12px; overflow-x: auto; white-space: pre-wrap; word-break: break-all;
+    margin: 8px 0; color: var(--text);
+  }
+  .pre .add { color: var(--ok); }
+  .pre .del { color: var(--error); }
+  .pre .hunk { color: var(--faint); }
+  .cellchange { margin: 8px 0; font-size: 13.5px; }
+  .cellchange .where { color: var(--muted); font-size: 12.5px; }
+  .cellchange .old { background: var(--error-bg); color: var(--error); border-radius: 4px; padding: 1px 6px; text-decoration: line-through; }
+  .cellchange .new { background: var(--ok-bg); color: var(--ok); border-radius: 4px; padding: 1px 6px; }
+  .dialog .d-foot { margin-top: 20px; font-size: 13px; color: var(--muted); }
+
+  footer { margin-top: 44px; color: var(--faint); font-size: 12.5px; text-align: center; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <span class="refresh" id="refreshState"></span>
+    <h1>IDADM 官方文档更新监控</h1>
+    <div class="sub">监控 CUHK CDMP 发布的官方 PDF，区分「文件被替换」与「内容真实变化」</div>
+  </header>
+
+  <div class="hero" id="hero">
+    <div class="title"><span class="dot"></span><span id="heroTitle">加载中…</span></div>
+    <div class="desc" id="heroDesc"></div>
+  </div>
+
+  <div class="meta" id="meta"></div>
+  <div class="notice" id="notice"></div>
+
+  <h2>监控文档</h2>
+  <div id="docs"></div>
+
+  <h2>变更时间线</h2>
+  <div id="timeline"></div>
+
+  <footer>
+    <div>本页面只读展示监控结果，不会触发新的检查 · 时间均为本地时区</div>
+  </footer>
+</div>
+
+<div class="overlay" id="overlay">
+  <div class="dialog" id="dialog"></div>
+</div>
+
+<script>
+"use strict";
+
+var RETRY_MS = 60000;                   // 拉取失败后的重试间隔
+var REFRESH_MIN_MS = 60000;             // 自动刷新下限
+var REFRESH_MAX_MS = 24 * 3600 * 1000;  // 自动刷新上限：一天，避免相对时间标签长期不更新
+var OUTCOME_ZH = {
+  initialized: "建立基线",
+  not_modified: "未修改（304）",
+  unchanged: "无变化",
+  metadata_only: "仅元数据变化",
+  content_changed: "检测到内容更新",
+  error: "检查失败"
+};
+var SUMMARY_ZH = [
+  ["pages_changed", "页面修改"], ["pages_added", "新增页面"], ["pages_removed", "删除页面"],
+  ["text_lines_added", "新增文本行"], ["text_lines_removed", "删除文本行"],
+  ["tables_added", "新增表格"], ["tables_removed", "删除表格"],
+  ["rows_added", "新增行"], ["rows_removed", "删除行"],
+  ["table_cells_modified", "修改单元格"], ["table_cells_added", "新增单元格"],
+  ["table_cells_removed", "删除单元格"]
+];
+var PAGE_STATUS_ZH = { modified: "已修改", added: "新增", removed: "已删除" };
+
+function $(id) { return document.getElementById(id); }
+function esc(s) {
+  return String(s == null ? "" : s).replace(/[&<>"']/g, function (c) {
+    return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c];
+  });
+}
+function pad(n) { return n < 10 ? "0" + n : "" + n; }
+function fmtAbs(iso) {
+  if (!iso) return "—";
+  var d = new Date(iso);
+  return d.getFullYear() + "-" + pad(d.getMonth() + 1) + "-" + pad(d.getDate()) +
+    " " + pad(d.getHours()) + ":" + pad(d.getMinutes());
+}
+function relTime(iso, now) {
+  if (!iso) return "—";
+  var diff = (new Date(iso).getTime() - (now || Date.now())) / 1000;
+  var future = diff > 0;
+  diff = Math.abs(diff);
+  var text;
+  if (diff < 60) text = Math.round(diff) + " 秒";
+  else if (diff < 3600) text = Math.round(diff / 60) + " 分钟";
+  else if (diff < 86400) text = Math.round(diff / 3600) + " 小时";
+  else if (diff < 86400 * 30) text = Math.round(diff / 86400) + " 天";
+  else return fmtAbs(iso);
+  return text + (future ? "后" : "前");
+}
+function fmtBytes(n) {
+  if (n == null) return "—";
+  if (n >= 1048576) return (n / 1048576).toFixed(1) + " MB";
+  if (n >= 1024) return Math.round(n / 1024) + " KB";
+  return n + " B";
+}
+function fmtDuration(ms) {
+  if (ms == null) return "—";
+  if (ms >= 1000) return (ms / 1000).toFixed(1) + " s";
+  return ms + " ms";
+}
+function fmtInterval(minutes) {
+  if (minutes == null) return "—";
+  if (minutes % 1440 === 0) return (minutes / 1440) + " 天";
+  if (minutes % 60 === 0) return (minutes / 60) + " 小时";
+  return minutes + " 分钟";
+}
+function segClass(outcome) {
+  if (outcome === "content_changed") return "changed";
+  if (outcome === "error") return "error";
+  return "ok";
+}
+
+var lastSuccessAt = null;
+
+function renderHero(data) {
+  var docs = data.documents || [];
+  var failing = docs.filter(function (d) { return d.monitor.consecutive_failures > 0; });
+  var withChange = docs.filter(function (d) { return d.latest_change; });
+  var hero = $("hero");
+  var title = $("heroTitle"), desc = $("heroDesc");
+
+  if (!docs.length) {
+    hero.className = "hero";
+    title.textContent = "暂无监控文档";
+    desc.textContent = "配置文件 documents.yaml 中没有文档。";
+    return;
+  }
+  if (failing.length) {
+    hero.className = "hero error";
+    title.textContent = "监控检查失败";
+    desc.textContent = failing.map(function (d) {
+      return "《" + d.title + "》连续失败 " + d.monitor.consecutive_failures + " 次";
+    }).join("；") + "。";
+    return;
+  }
+  if (withChange.length) {
+    var latest = withChange.slice().sort(function (a, b) {
+      return new Date(b.latest_change.detected_at) - new Date(a.latest_change.detected_at);
+    })[0];
+    hero.className = "hero changed";
+    title.textContent = "检测到官方文档更新";
+    desc.textContent = "最近一次：" + relTime(latest.latest_change.detected_at) +
+      "（《" + latest.title + "》）· 共 " + withChange.length + " 份文档有内容变化。";
+    return;
+  }
+  hero.className = "hero";
+  title.textContent = "官方文档无更新";
+  desc.textContent = docs.length + " 份文档自建立基线以来内容无变化。";
+}
+
+function renderMeta(data) {
+  var docs = data.documents || [];
+  var lastChecked = null;
+  docs.forEach(function (d) {
+    var t = d.monitor.last_checked_at;
+    if (t && (!lastChecked || t > lastChecked)) lastChecked = t;
+  });
+  var s = data.scheduler || {};
+  var next = s.enabled ? (s.next_run_at ? "约 " + relTime(s.next_run_at) : "等待调度") : "调度器未启用";
+  $("meta").innerHTML =
+    "<span>最后检查 <b>" + (lastChecked ? relTime(lastChecked) : "尚未检查") + "</b></span>" +
+    "<span>下次检查 <b>" + esc(next) + "</b></span>" +
+    "<span>检查间隔 <b>" + esc(fmtInterval(s.interval_minutes)) + "</b></span>" +
+    "<span>生成于 <b>" + esc(fmtAbs(data.generated_at)) + "</b></span>";
+}
+
+function renderDocs(data) {
+  var host = $("docs");
+  host.innerHTML = (data.documents || []).map(function (d) {
+    var failing = d.monitor.consecutive_failures > 0;
+    var changed = !!d.latest_change;
+    var badge = failing
+      ? '<span class="badge error">检查失败</span>'
+      : changed
+        ? '<span class="badge changed">有更新</span>'
+        : '<span class="badge ok">无更新</span>';
+
+    var errbox = failing && d.monitor.last_error
+      ? '<div class="errbox">' + esc(d.monitor.last_error) + "</div>" : "";
+
+    var v = d.current_version;
+    var ver = v
+      ? "当前版本：" + esc(fmtAbs(v.fetched_at)) + " 抓取 · " + esc(v.page_count) + " 页 · " +
+        esc(fmtBytes(v.size_bytes)) + " · " + esc(String(v.sha256 || "").slice(0, 8))
+      : "尚未成功抓取过";
+
+    var checks = d.checks || [];
+    var bar, barLabel;
+    if (checks.length) {
+      bar = '<div class="bar">' + checks.map(function (c) {
+        var tip = fmtAbs(c.checked_at) + " · " +
+          (OUTCOME_ZH[c.outcome] || c.outcome) +
+          " · HTTP " + (c.http_status == null ? "—" : c.http_status) +
+          " · " + fmtDuration(c.duration_ms);
+        return '<div class="seg ' + segClass(c.outcome) + '" title="' + esc(tip) + '"></div>';
+      }).join("") + "</div>";
+      barLabel = '<div class="bar-label">最近 ' + checks.length + " 次检查（左起最早）· 绿=无变化，蓝=检测到内容更新，红=检查失败</div>";
+    } else {
+      bar = "";
+      barLabel = '<div class="bar-label">尚无检查记录</div>';
+    }
+
+    var latest;
+    if (d.latest_change) {
+      latest = '<div class="latest">最近更新：<b>' + esc(relTime(d.latest_change.detected_at)) +
+        "</b> · " + esc(d.latest_change.headline) +
+        ' <button class="link" onclick="openDetail(' + d.latest_change.id + ')">查看报告</button></div>';
+    } else {
+      latest = '<div class="latest muted">自建立基线以来内容无变化</div>';
+    }
+
+    return '<div class="card">' +
+      '<div class="head"><span class="title"><a href="' + esc(d.url) + '" target="_blank" rel="noopener">' +
+      esc(d.title) + "</a></span>" + badge + "</div>" +
+      '<div class="ver">' + esc(ver) + "</div>" + errbox + bar + barLabel + latest +
+      "</div>";
+  }).join("");
+}
+
+function renderTimeline(data) {
+  var host = $("timeline");
+  var items = data.recent_changes || [];
+  if (!items.length) {
+    host.innerHTML = '<div class="empty">暂无变更记录——官方文档自监控上线以来没有内容变化。</div>';
+    return;
+  }
+  host.innerHTML = items.map(function (c) {
+    return '<div class="timeline-item" onclick="openDetail(' + c.id + ')">' +
+      '<span class="t-dot"></span>' +
+      '<div class="t-body"><div class="t-title"><span class="doc">' + esc(c.document_title) + "</span>" +
+      esc(c.headline) + "</div></div>" +
+      '<div class="t-time">' + esc(fmtAbs(c.detected_at)) + " · " + esc(relTime(c.detected_at)) + "</div>" +
+      "</div>";
+  }).join("");
+}
+
+function renderSummaryChips(summary) {
+  var chips = SUMMARY_ZH.filter(function (pair) { return (summary[pair[0]] || 0) > 0; })
+    .map(function (pair) { return '<span class="chip">' + pair[1] + ' <b>' + summary[pair[0]] + "</b></span>"; });
+  return chips.length ? '<div class="chips">' + chips.join("") + "</div>" : "";
+}
+
+function renderLineChanges(page) {
+  var html = "";
+  (page.line_changes || []).forEach(function (ch) {
+    (ch.old_lines || []).forEach(function (line) {
+      html += '<span class="del">- ' + esc(line) + "</span>\n";
+    });
+    (ch.new_lines || []).forEach(function (line) {
+      html += '<span class="add">+ ' + esc(line) + "</span>\n";
+    });
+  });
+  return html ? '<div class="pre">' + html + "</div>" : "";
+}
+
+function renderTableChanges(page) {
+  var html = "";
+  (page.table_changes || []).forEach(function (tc) {
+    var where = "表格 " + ((tc.table_index == null ? 1 : tc.table_index + 1));
+    if (tc.type === "cell_modified") {
+      html += '<div class="cellchange"><span class="where">' + where + " · 第 " +
+        ((tc.old_row == null ? "?" : tc.old_row + 1)) + " 行 第 " +
+        ((tc.column == null ? "?" : tc.column + 1)) + " 列：</span>" +
+        '<span class="old">' + esc(tc.old) + '</span> → <span class="new">' + esc(tc.new) + "</span>" +
+        (tc.row_context ? ' <div class="pre">' + esc(tc.row_context) + "</div>" : "") +
+        "</div>";
+    } else if (tc.type === "cell_added" || tc.type === "cell_removed") {
+      var label = tc.type === "cell_added" ? "新增单元格" : "删除单元格";
+      html += '<div class="cellchange"><span class="where">' + where + " · " + label +
+        '：</span><span class="' + (tc.type === "cell_added" ? "new" : "old") + '">' +
+        esc(tc.new != null ? tc.new : tc.old) + "</span>" +
+        (tc.row_context ? ' <div class="pre">' + esc(tc.row_context) + "</div>" : "") +
+        "</div>";
+    } else if (tc.type === "row_added" || tc.type === "row_removed") {
+      html += '<div class="cellchange"><span class="where">' + where + " · " +
+        (tc.type === "row_added" ? "新增一行" : "删除一行") + "：</span>" +
+        (tc.row_context ? '<div class="pre">' + esc(tc.row_context) + "</div>" : "") + "</div>";
+    } else if (tc.type === "table_added" || tc.type === "table_removed") {
+      html += '<div class="cellchange"><span class="where">' + where + " · " +
+        (tc.type === "table_added" ? "整个表格新增" : "整个表格删除") + "</span></div>";
+    }
+  });
+  return html;
+}
+
+function renderUnifiedDiff(text) {
+  if (!text) return "";
+  var html = text.split("\n").map(function (line) {
+    var cls = "";
+    if (line.startsWith("+")) cls = "add";
+    else if (line.startsWith("-")) cls = "del";
+    else if (line.startsWith("@@")) cls = "hunk";
+    return cls ? '<span class="' + cls + '">' + esc(line) + "</span>" : esc(line);
+  }).join("\n");
+  return '<div class="pre">' + html + "</div>";
+}
+
+function renderDetail(detail) {
+  var pages = (detail.diff && detail.diff.pages) || [];
+  var html = '<button class="d-close" onclick="closeDetail()" title="关闭">×</button>' +
+    "<h3>" + esc(detail.headline) + "</h3>" +
+    '<div class="d-sub">《' + esc(detail.document_title) + "》· 检测于 " +
+    esc(fmtAbs(detail.detected_at)) + "（" + esc(relTime(detail.detected_at)) + "）</div>" +
+    renderSummaryChips(detail.summary || {});
+  if (detail.truncated) {
+    html += '<div class="truncated">差异过大已被截断，完整内容请查看 Markdown 报告。</div>';
+  }
+  pages.forEach(function (p) {
+    var pageNo = p.new_page != null ? p.new_page : p.old_page;
+    html += '<div class="page-sec"><div class="p-head">第 ' + esc(pageNo) + " 页" +
+      '<span class="chip">' + esc(PAGE_STATUS_ZH[p.status] || p.status) + "</span></div>" +
+      renderTableChanges(p) + renderLineChanges(p) + "</div>";
+  });
+  if (detail.unified_diff) {
+    html += '<div class="page-sec"><div class="p-head">Unified diff</div>' +
+      renderUnifiedDiff(detail.unified_diff) + "</div>";
+  }
+  html += '<div class="d-foot"><a href="' + esc(detail.markdown_url) + '" target="_blank" rel="noopener">查看完整 Markdown 报告 ↗</a></div>';
+  return html;
+}
+
+function openDetail(changeId) {
+  fetch("/updates/changes/" + changeId, { cache: "no-store" })
+    .then(function (r) {
+      if (!r.ok) throw new Error("HTTP " + r.status);
+      return r.json();
+    })
+    .then(function (detail) {
+      $("dialog").innerHTML = renderDetail(detail);
+      $("overlay").classList.add("open");
+      $("dialog").scrollTop = 0;
+    })
+    .catch(function (err) {
+      $("dialog").innerHTML =
+        '<button class="d-close" onclick="closeDetail()" title="关闭">×</button>' +
+        "<h3>加载失败</h3>" +
+        '<div class="d-sub">' + esc(err.message) + "，请稍后重试。</div>";
+      $("overlay").classList.add("open");
+    });
+}
+function closeDetail() { $("overlay").classList.remove("open"); }
+$("overlay").addEventListener("click", function (e) {
+  if (e.target === $("overlay")) closeDetail();
+});
+document.addEventListener("keydown", function (e) {
+  if (e.key === "Escape") closeDetail();
+});
+
+var refreshTimer = null;
+
+// 自动刷新对齐检查间隔：数据只在检查后才可能变化，无需高频轮询。
+// 间隔缺省时取上限；失败重试固定 60 秒。回到可见标签页时立即刷新（见 visibilitychange）。
+function scheduleRefresh(intervalMinutes) {
+  if (refreshTimer !== null) clearTimeout(refreshTimer);
+  var ms = (intervalMinutes || 0) * 60000 || REFRESH_MAX_MS;
+  ms = Math.max(REFRESH_MIN_MS, Math.min(ms, REFRESH_MAX_MS));
+  refreshTimer = setTimeout(loadData, ms);
+}
+
+function loadData() {
+  fetch("/updates/data.json", { cache: "no-store" })
+    .then(function (r) {
+      if (!r.ok) throw new Error("HTTP " + r.status);
+      return r.json();
+    })
+    .then(function (data) {
+      lastSuccessAt = Date.now();
+      $("notice").style.display = "none";
+      renderHero(data);
+      renderMeta(data);
+      renderDocs(data);
+      renderTimeline(data);
+      scheduleRefresh(data.scheduler && data.scheduler.interval_minutes);
+    })
+    .catch(function () {
+      var box = $("notice");
+      box.style.display = "block";
+      box.textContent = "数据加载失败，将自动重试" +
+        (lastSuccessAt ? "（上次成功更新：" + relTime(new Date(lastSuccessAt).toISOString()) + "）" : "") + "。";
+      scheduleRefresh(1);
+    });
+}
+function renderRefreshState() {
+  if (!lastSuccessAt) return;
+  $("refreshState").textContent = "已更新 · " + relTime(new Date(lastSuccessAt).toISOString());
+}
+window.openDetail = openDetail;
+window.closeDetail = closeDetail;
+loadData();
+setInterval(renderRefreshState, 5000);
+document.addEventListener("visibilitychange", function () {
+  if (!document.hidden) loadData();
+});
+</script>
+</body>
+</html>

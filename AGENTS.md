@@ -68,6 +68,8 @@
 | `app/presenters.py` | 数据库行到稳定 API JSON 的转换 |
 | `app/schemas.py` | Pydantic 响应模型 |
 | `app/api.py` | FastAPI 工厂、鉴权、路由、lifespan |
+| `app/updates_page.py` | `/updates` 更新页路由：公开只读、聚合 JSON、页面私有契约 |
+| `app/static/updates.html` | 更新页本体：自包含 HTML/CSS/JS，无 CDN、无构建步骤 |
 | `app/cli.py` | `init-db`、`check`、`status`、`changes`、`show-change` |
 | `config/documents.yaml` | 被监控 URL 的登记表 |
 | `tests/` | 合成 PDF、mock HTTP origin、差分与 API 测试 |
@@ -114,6 +116,7 @@ docker compose logs -f --tail=100
 - 配置只从环境变量进入 `Settings`；新增配置时同步更新 `.env.example` 和 README。
 - API 统一挂在 `/api/v1` 下；对外字段由 `presenters.py` 输出，不要让数据库列名直接泄漏到 API。
 - API 变更以向后兼容为默认：新增字段可以，重命名或删除字段必须升级 API 版本。
+- `/updates` 是给人看的更新页命名空间：公开只读、不走 API Key、只处理 GET、绝不触发 `POST /check`、不进 OpenAPI。它只暴露非敏感字段（公开 PDF 的标题/URL/时间戳/变更报告），与 `app/static/updates.html` 一起版本化，不受 `/api/v1` 的向后兼容承诺约束；改动 `updates.html` 的脚本时跑 `tests/test_updates_page.py::test_updates_page_script_has_valid_syntax`。
 - 用户可见的变更报告用中文；代码、变量名、docstring 用英文。日期与文件路径使用跨平台写法。
 - 网络请求只在 `fetcher.py` 中做；不要在路由或差分代码里直接发 HTTP。
 - 抓取保持低频、带真实联系方式的 `User-Agent`，不要压测原站。

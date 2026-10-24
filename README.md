@@ -168,7 +168,10 @@ IDADM-Official-Doc-Monitor/
 │   ├── presenters.py    # DB row → API 响应
 │   ├── scheduler.py     # APScheduler
 │   ├── schemas.py       # Pydantic 响应模型
-│   └── timeutil.py      # UTC 时间工具
+│   ├── static/
+│   │   └── updates.html # /updates 更新页（自包含 HTML，无外部依赖）
+│   ├── timeutil.py      # UTC 时间工具
+│   └── updates_page.py  # /updates 公开只读路由与聚合 JSON
 ├── config/documents.yaml
 ├── tests/
 ├── AGENTS.md            # 后续 vibe-coding 与维护约束
@@ -234,6 +237,8 @@ python -m app.cli show-change --document sea-course-list --change-id 1 --format 
 ```
 
 ## 6. Docker 部署（推荐 Linux 服务器）
+
+> 已经使用 1Panel，且同一域名下已有 Streamlit 服务：见 [docs/deploy-1panel.md](docs/deploy-1panel.md)。用路径反代只把 `/api/` 转给本项目，不需要 Caddy，也不影响原站。
 
 ```bash
 cp .env.example .env
@@ -342,6 +347,7 @@ Authorization: Bearer <key>
 | GET | `/api/v1/documents` | 所有文档的状态摘要 |
 | GET | `/api/v1/documents/{key}` | 单文档完整状态 |
 | GET | `/api/v1/documents/{key}/versions` | 版本历史（分页） |
+| GET | `/api/v1/documents/{key}/checks` | 检查审计历史（分页，倒序） |
 | GET | `/api/v1/documents/{key}/changes` | 变更列表（分页，倒序） |
 | GET | `/api/v1/documents/{key}/changes/latest` | 最近一次内容变更详情 |
 | GET | `/api/v1/documents/{key}/changes/{id}` | 指定变更详情（JSON） |
@@ -349,6 +355,24 @@ Authorization: Bearer <key>
 | GET | `/api/v1/documents/{key}/changes/{id}/diff` | 纯文本 unified diff |
 | POST | `/api/v1/documents/{key}/check` | 立即检查单份文档 |
 | POST | `/api/v1/check` | 立即检查全部文档 |
+
+### 更新页 `/updates`（免鉴权）
+
+给人看的 status page：一眼回答「官方文档有没有更新文件」。生产部署在 `https://idadm.alexzsk.xyz/updates`（反代配置见 `docs/deploy-1panel.md`）。
+
+- 顶部横幅直接给出结论：绿色「官方文档无更新」/ 蓝色「检测到官方文档更新」（含最近一次时间）/ 红色「检查失败」。
+- 每份文档一张卡片：状态徽章、当前版本摘要、**检查历史条**（每格一次检查：绿=无变化、蓝=检测到内容更新、红=检查失败，hover 看详情）。
+- 变更时间线（跨文档最近 20 条），点击查看页/表格/单元格级差异（单元格 old→new 红绿高亮）与着色 unified diff，并可跳转完整 Markdown 报告。
+- 自动刷新对齐检查间隔（`CHECK_INTERVAL_MINUTES`，上限一天；拉取失败 60 秒重试），回到标签页时立即刷新；深浅色自适应。
+
+| 方法 | 路径 | 说明 |
+| --- | --- | --- |
+| GET | `/updates` | 更新页 HTML（`app/static/updates.html`） |
+| GET | `/updates/data.json` | 页面聚合数据（文档状态 + 检查历史 + 最近变更） |
+| GET | `/updates/changes/{id}` | 变更详情（页面私有格式） |
+| GET | `/updates/changes/{id}/markdown` | 变更 Markdown 报告 |
+
+约束：`/updates` 命名空间**公开只读**——不需要 API Key、只暴露非敏感字段（公开 PDF 的标题/URL/时间戳/变更报告）、只处理 GET、绝不触发检查。它是与 `updates.html` 一起版本化的页面私有契约，不进 OpenAPI，也不受 `/api/v1` 向后兼容承诺约束。
 
 ### 外部服务如何判断“有没有更改”
 
@@ -530,7 +554,7 @@ pytest -q
 - **视觉差异 / OCR**：对扫描 PDF 渲染页面并做像素 diff，或接 OCR；作为文本层缺失时的降级方案。
 - **语义摘要**：把结构化 diff 交给 LLM，总结成“哪门课从 A 改成了 B”，同时保留原始字面 diff 作为证据。
 - **多文档/HA**：PostgreSQL + 独立 worker + 对象存储 + 外部调度，API 可水平扩容。
-- **可视化页面**：展示时间线、页面对比和单元格高亮；当前先满足 API 消费。
+- **可视化页面**：`/updates` 更新页已覆盖状态横幅、检查历史、变更时间线与单元格高亮；像素级页面对比仍未做。
 - **Prometheus/告警**：暴露检查成功率、失败次数、下次运行时间等指标。
 
 ## 12. 使用边界

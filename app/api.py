@@ -19,6 +19,7 @@ from .schemas import (
     ChangeDetail,
     ChangeList,
     CheckAllResponse,
+    CheckList,
     CheckResult,
     DocumentList,
     DocumentStatus,
@@ -26,6 +27,7 @@ from .schemas import (
     VersionList,
 )
 from .timeutil import to_iso
+from .updates_page import create_updates_router
 
 logger = logging.getLogger(__name__)
 api_key_header = APIKeyHeader(name="X-API-Key", auto_error=False)
@@ -111,7 +113,9 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     @app.middleware("http")
     async def no_cache_api(request: Request, call_next):  # type: ignore[no-untyped-def]
         response = await call_next(request)
-        if request.url.path.startswith("/api/v1"):
+        if request.url.path.startswith("/api/v1") or request.url.path.startswith(
+            "/updates"
+        ):
             response.headers["Cache-Control"] = "no-store"
         return response
 
@@ -177,6 +181,24 @@ def create_app(settings: Settings | None = None) -> FastAPI:
                 raise HTTPException(status_code=404, detail=f"Unknown document: {key}")
             versions = presenters.build_version_list(conn, key, limit, offset)
         return {"document_key": key, "versions": versions}
+
+    @router.get(
+        "/documents/{key}/checks", response_model=CheckList, tags=["documents"]
+    )
+    def list_document_checks(
+        key: str,
+        limit: int = Query(20, ge=1, le=100),
+        offset: int = Query(0, ge=0),
+    ) -> dict[str, Any]:
+        with db.read(settings) as conn:
+            if db.get_document(conn, key) is None:
+                raise HTTPException(status_code=404, detail=f"Unknown document: {key}")
+            checks = [
+                presenters.check_info(check)
+                for check in db.list_checks(conn, key, limit, offset)
+                if check is not None
+            ]
+        return {"document_key": key, "checks": checks}
 
     @router.get(
         "/documents/{key}/changes", response_model=ChangeList, tags=["documents"]
@@ -273,4 +295,5 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         return {"results": await service.check_all(force_full=full)}
 
     app.include_router(router)
+    app.include_router(create_updates_router(settings))
     return app

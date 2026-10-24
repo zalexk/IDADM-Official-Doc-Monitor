@@ -447,6 +447,28 @@ def get_change(
     )
 
 
+def get_change_by_id(conn: sqlite3.Connection, change_id: int) -> dict[str, Any] | None:
+    return _row(
+        conn.execute("SELECT * FROM changes WHERE id = ?", (change_id,)).fetchone()
+    )
+
+
+def list_recent_changes(conn: sqlite3.Connection, limit: int) -> list[dict[str, Any]]:
+    """Most recent changes across all documents, newest first, with document titles."""
+    return [
+        dict(row)
+        for row in conn.execute(
+            """
+            SELECT changes.*, documents.title AS document_title
+            FROM changes JOIN documents ON documents.key = changes.document_key
+            ORDER BY changes.id DESC
+            LIMIT ?
+            """,
+            (limit,),
+        ).fetchall()
+    ]
+
+
 def get_latest_change(
     conn: sqlite3.Connection, document_key: str
 ) -> dict[str, Any] | None:
